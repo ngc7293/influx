@@ -1,0 +1,6 @@
+# Artefacts
+_build/
+build/
+
+# IDE
+.vscode

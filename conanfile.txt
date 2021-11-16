@@ -1,0 +1,8 @@
+[requires]
+libcurl/7.79.1
+nlohmann_json/3.10.4
+gtest/1.11.0
+
+[generators]
+cmake
+cmake_paths
