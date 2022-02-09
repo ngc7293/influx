@@ -3,18 +3,46 @@
 
 #include <memory>
 #include <string>
-#include <vector>
+#include <thread>
 #include <utility>
+#include <vector>
+
+#include <influx/types.hh>
 
 namespace influx::transport {
 
+enum class Verb {
+    GET,
+    POST,
+    PUT,
+    DELETE
+};
+
+struct HttpResponse {
+    int status;
+    std::string body;
+};
+
 class HttpSession {
 public:
-    HttpSession(const std::string& domain, const std::string& org);
+    HttpSession(const std::string& host, const std::string& token);
     ~HttpSession();
 
-    void Post(
-        const std::string& path,
+    HttpResponse Get(
+        const std::string& url,
+        const std::vector<std::pair<std::string, std::string>> headers
+    );
+
+    HttpResponse Post(
+        const std::string& url,
+        const std::vector<std::pair<std::string, std::string>> headers,
+        const std::string& body
+    );
+
+private:
+    HttpResponse Perform(
+        const Verb verb,
+        const std::string& url,
         const std::vector<std::pair<std::string, std::string>> headers,
         const std::string& body
     );

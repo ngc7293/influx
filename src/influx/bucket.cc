@@ -12,10 +12,20 @@ struct Bucket::Priv {
     std::deque<Measurement> buffer;
 };
 
+Bucket::Bucket(Bucket&& other)
+    : d_(new Priv)
+{
+    d_.swap(other.d_);
+}
+
 Bucket::Bucket(const std::string& name)
     : d_(new Priv)
 {
     d_->name = name;
+}
+
+Bucket::~Bucket()
+{
 }
 
 void Bucket::Write(const Measurement& measurement)
@@ -50,6 +60,11 @@ void Bucket::Flush()
 void Bucket::SetBatchSize(size_t size)
 {
     d_->batchSize = size;
+}
+
+std::string Bucket::name() const
+{
+    return d_->name;
 }
 
 } // namespace

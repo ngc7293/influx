@@ -9,10 +9,9 @@
 namespace influx {
 
 class Bucket {
-private: 
-    Bucket(const std::string& name);
-
 public:
+    Bucket(Bucket&& other);
+    Bucket(const std::string& name);
     ~Bucket();
 
     void Write(const Measurement& seasurement);
@@ -22,6 +21,8 @@ public:
 
     void Flush();
     void SetBatchSize(size_t size);
+
+    std::string name() const;
 
 private:
     struct Priv;

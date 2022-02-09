@@ -11,6 +11,6 @@ add_library(influx-cpp STATIC
 )
 
 target_compile_features(influx-cpp PUBLIC cxx_std_20)
-target_link_libraries(influx-cpp PRIVATE CONAN_PKG::libcurl)
+target_link_libraries(influx-cpp PRIVATE CONAN_PKG::libcurl CONAN_PKG::nlohmann_json)
 
 add_subdirectory(tests)
