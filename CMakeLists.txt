@@ -1,20 +1,22 @@
 cmake_minimum_required(VERSION 3.17)
 project(influx-cpp VERSION 0.0.1)
 
-include("${CMAKE_BINARY_DIR}/conan_paths.cmake")
-include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
-conan_basic_setup(TARGETS)
+if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
+    include("${CMAKE_BINARY_DIR}/conan_paths.cmake")
+    include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
+    conan_basic_setup(TARGETS)
+endif()
 
 add_compile_options(-Wall -Wpedantic -Werror)
 
 add_library(influx STATIC
     include/influx/bucket.hh
+    include/influx/client.hh
     include/influx/influx.hh
     include/influx/measurement.hh
     include/influx/types.hh
     src/bucket.cc
     src/client.cc
-    src/client.hh
     src/influx.cc
     src/measurement.cc
 )
