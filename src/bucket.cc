@@ -31,6 +31,11 @@ Bucket::Bucket(Bucket&& other)
     d_.swap(other.d_);
 }
 
+Bucket::Bucket(const Bucket& other)
+    : d_(new Priv{other.d_->id, other.d_->name, other.d_->orgId, other.d_->client})
+{
+}
+
 Bucket::Bucket(const std::string& id, const std::string& name, const std::string& orgId, transport::HttpClient&& client)
     : d_(new Priv{id, name, orgId, std::move(client)})
 {

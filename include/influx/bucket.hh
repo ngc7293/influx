@@ -13,6 +13,7 @@ namespace influx {
 class Bucket {
 public:
     Bucket(Bucket&& other);
+    Bucket(const Bucket& other);
     ~Bucket();
 
     void Write(const Measurement& seasurement);

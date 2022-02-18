@@ -13,6 +13,16 @@ struct Influx::Priv {
     const std::string org;
 };
 
+Influx::Influx(Influx&& other)
+    : d_(new Priv)
+{
+    d_.swap(other.d_);
+}
+Influx::Influx(const Influx& other)
+    : d_(new Priv{other.d_->client, other.d_->org})
+{
+}
+
 Influx::Influx(const std::string& host, const std::string& org, const std::string& token)
     : d_(new Priv{{host, org, token}, org})
 {

@@ -14,6 +14,8 @@ class Measurement;
 class Influx {
 public:
     Influx() = delete;
+    Influx(Influx&& other);
+    Influx(const Influx& other);
     Influx(const std::string& host, const std::string& org, const std::string& token);
     ~Influx();
 

@@ -7,4 +7,20 @@ conan_basic_setup(TARGETS)
 
 add_compile_options(-Wall -Wpedantic -Werror)
 
-add_subdirectory(src)
+add_library(influx STATIC
+    include/influx/bucket.hh
+    include/influx/influx.hh
+    include/influx/measurement.hh
+    include/influx/types.hh
+    src/bucket.cc
+    src/client.cc
+    src/client.hh
+    src/influx.cc
+    src/measurement.cc
+)
+
+target_include_directories(influx PUBLIC include/)
+target_compile_features(influx PUBLIC cxx_std_20)
+target_link_libraries(influx PRIVATE CONAN_PKG::libcurl CONAN_PKG::nlohmann_json)
+
+add_subdirectory(tests)
