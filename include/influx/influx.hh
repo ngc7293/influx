@@ -20,11 +20,13 @@ public:
     ~Influx();
 
     Bucket CreateBucket(const std::string& name, const std::chrono::seconds& dataRetention);
-    Bucket GetBucket(const std::string& name);
+    Bucket GetBucket(const std::string& id);
     std::vector<Bucket> ListBuckets();
     void DeleteBucket(Bucket& name);
 
     std::vector<Measurement> Query(const std::string& flux);
+
+    Bucket operator[](const std::string& id);
 
 private:
     struct Priv;

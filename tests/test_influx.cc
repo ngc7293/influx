@@ -70,13 +70,24 @@ TEST_F(InfluxTest, should_list_all_buckets)
 
 TEST_F(InfluxTest, should_get_single_bucket)
 {
-    auto name = influx::test::nowstring();
-    auto id = db.CreateBucket(name, 1h).id();
+    {
+        auto name = influx::test::nowstring();
+        auto id = db.CreateBucket(name, 1h).id();
 
-    auto bucket = db.GetBucket(id);
-    EXPECT_EQ(bucket.id(), id);
-    EXPECT_EQ(bucket.name(), name);
-    EXPECT_FALSE(bucket.is_system_bucket());
+        auto bucket = db.GetBucket(id);
+        EXPECT_EQ(bucket.id(), id);
+        EXPECT_EQ(bucket.name(), name);
+        EXPECT_FALSE(bucket.is_system_bucket());
+    }
+    {
+        auto name = influx::test::nowstring();
+        auto id = db.CreateBucket(name, 1h).id();
+
+        auto bucket = db[id];
+        EXPECT_EQ(bucket.id(), id);
+        EXPECT_EQ(bucket.name(), name);
+        EXPECT_FALSE(bucket.is_system_bucket());
+    }
 }
 
 TEST_F(InfluxTest, should_query_data)

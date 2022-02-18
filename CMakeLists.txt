@@ -7,8 +7,6 @@ if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
     conan_basic_setup(TARGETS)
 endif()
 
-add_compile_options(-Wall -Wpedantic -Werror)
-
 add_library(influx STATIC
     include/influx/bucket.hh
     include/influx/client.hh
@@ -21,8 +19,14 @@ add_library(influx STATIC
     src/measurement.cc
 )
 
-target_include_directories(influx PUBLIC include/)
+target_include_directories(influx PUBLIC include)
 target_compile_features(influx PUBLIC cxx_std_20)
 target_link_libraries(influx PRIVATE CONAN_PKG::libcurl CONAN_PKG::nlohmann_json)
+
+if (UNIX)
+    target_compile_options(influx PRIVATE -Wall -Werror -Wpedantic -Wno-unknown-pragmas)
+elseif(MSVC)
+    target_compile_options(influx PRIVATE /W4 /WX /wd4068)
+endif()
 
 add_subdirectory(tests)

@@ -121,4 +121,9 @@ std::vector<Measurement> Influx::Query(const std::string& flux)
     return {};
 }
 
+Bucket Influx::operator[](const std::string& id)
+{
+    return GetBucket(id);
+}
+
 }

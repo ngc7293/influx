@@ -12,6 +12,7 @@ namespace influx {
 
 class Bucket {
 public:
+    Bucket();
     Bucket(Bucket&& other);
     Bucket(const Bucket& other);
     ~Bucket();
@@ -28,7 +29,6 @@ public:
     bool is_system_bucket() const;
 
 private:
-    Bucket();
     Bucket(const std::string& id, const std::string& name, const std::string& orgId, transport::HttpClient&& client);
     friend class Influx;
 
