@@ -1,8 +1,9 @@
 #include <iostream>
 
+#include <cassert>
 #include <cstring>
 
-#include <influx/transport.hh>
+#include <influx/client.hh>
 
 #include <curl/curl.h>
 
@@ -41,68 +42,104 @@ namespace {
     }
 }
 
-struct HttpSession::Priv {
-    CURL* handle;
-    std::string host;
-    std::string token;
+struct HttpClient::Priv {
+    const std::string host, org, token;
+    CURL* handle = curl_easy_init();
+
+    std::string makeUrl(const std::string& endpoint)
+    {
+        std::string out;
+
+        if (endpoint.find("?") == std::string::npos) {
+            out = "?orgID=";
+        } else {
+            out = "&orgID=";
+        }
+
+        return host + endpoint + out + org;
+    }
 };
 
-HttpSession::HttpSession(const std::string& host, const std::string& token)
+HttpClient::HttpClient()
     : d_(new Priv)
 {
-    d_->handle = curl_easy_init();
-    d_->host = host;
-    d_->token = token;
 }
 
-HttpSession::~HttpSession()
+HttpClient::HttpClient(HttpClient&& other)
+    : d_(new Priv)
+{
+    d_.swap(other.d_);
+}
+
+HttpClient::HttpClient(const HttpClient& other)
+    : d_(new Priv{other.d_->host, other.d_->org, other.d_->token})
+{
+}
+
+HttpClient::HttpClient(const std::string& host, const std::string& org, const std::string& token)
+    : d_(new Priv{host, org, token})
+{
+}
+
+HttpClient::~HttpClient()
 {
     curl_easy_cleanup(d_->handle);
 }
 
-HttpResponse HttpSession::Get(
-    const std::string& url,
+HttpResponse HttpClient::Get(
+    const std::string& endpoint,
     const std::vector<std::pair<std::string, std::string>> headers
 )
 {
-    return Perform(Verb::GET, url, headers, "");
+    return Perform(Verb::GET, endpoint, std::string(), headers);
 }
 
-HttpResponse HttpSession::Post(
-    const std::string& url,
-    const std::vector<std::pair<std::string, std::string>> headers,
-    const std::string& body
+HttpResponse HttpClient::Post(
+    const std::string& endpoint,
+    const std::string& body,
+    const std::vector<std::pair<std::string, std::string>> headers
 )
 {
-    return Perform(Verb::POST, url, headers, body);
+    return Perform(Verb::POST, endpoint, body, headers);
 }
 
-HttpResponse HttpSession::Perform(
+HttpResponse HttpClient::Delete(
+    const std::string& endpoint,
+    const std::string& body,
+    const std::vector<std::pair<std::string, std::string>> headers
+)
+{
+    return Perform(Verb::DELETE, endpoint, body, headers);
+}
+
+HttpResponse HttpClient::Perform(
     Verb verb,
-    const std::string& url,
-    const std::vector<std::pair<std::string, std::string>> headers,
-    const std::string& body
+    const std::string& endpoint,
+    const std::string& body,
+    const std::vector<std::pair<std::string, std::string>> headers
 )
 {
     ReadCallbackData source{body};
     WriteCallbackData target;
-    curl_easy_setopt(d_->handle, CURLOPT_URL, (d_->host + url).c_str());
 
+    curl_easy_reset(d_->handle);
+    curl_easy_setopt(d_->handle, CURLOPT_URL, d_->makeUrl(endpoint).c_str());
 
     switch (verb) {
         case Verb::GET:
-            std::cout << "[GET]";
             break;
         case Verb::POST:
-            std::cout << "[POST]";
             curl_easy_setopt(d_->handle, CURLOPT_POST, 1);
             curl_easy_setopt(d_->handle, CURLOPT_POSTFIELDSIZE, source.body.length());
             break;
+        case Verb::DELETE:
+            curl_easy_setopt(d_->handle, CURLOPT_CUSTOMREQUEST, "DELETE");
+            curl_easy_setopt(d_->handle, CURLOPT_POSTFIELDSIZE, source.body.length());
+            break;
         default:
+            assert(false);
             break;
     }
-
-    std::cout << " " << (d_->host + url) << std::endl;
 
     struct curl_slist* curlHeaders = nullptr;
     for (const auto& header: headers) {
@@ -117,24 +154,25 @@ HttpResponse HttpSession::Perform(
     curl_easy_setopt(d_->handle, CURLOPT_READDATA, (void*)&source);
     curl_easy_setopt(d_->handle, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(d_->handle, CURLOPT_WRITEDATA, (void*)&target);
-    curl_easy_setopt(d_->handle, CURLOPT_FAILONERROR, 1);
     
-    auto result = curl_easy_perform(d_->handle);
-    if (result != CURLE_OK) {
-        int status;
-        if (curl_easy_getinfo(d_->handle, CURLINFO_RESPONSE_CODE, &status) == CURLE_OK) {
-            throw InfluxRemoteError(status);
-        } else {
-            throw InfluxError();
-        }
+    if (curl_easy_perform(d_->handle) != CURLE_OK) {
+        curl_slist_free_all(curlHeaders);
+        throw InfluxError();
     }
 
-    curl_slist_free_all(curlHeaders);
+    int status;
+    curl_easy_getinfo(d_->handle, CURLINFO_RESPONSE_CODE, &status);
+
+    if (status / 100 > 2) {
+        curl_slist_free_all(curlHeaders);
+        throw InfluxRemoteError(status, std::move(target.body));
+    }
 
     HttpResponse response;
     curl_easy_getinfo(d_->handle, CURLINFO_RESPONSE_CODE, &response.status);
     response.body = std::move(target.body);
 
+    curl_slist_free_all(curlHeaders);
     return response;
 }
 

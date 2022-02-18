@@ -4,3 +4,6 @@ build/
 
 # IDE
 .vscode
+
+# Secrets
+test.config.json

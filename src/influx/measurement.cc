@@ -79,6 +79,14 @@ bool operator<(const Field& lhs, const Field& rhs)
     return lhs.key.compare(rhs.key) < 0;
 }
 
+// Measurement::Measurement(Measurement&& other)
+// {
+//     name_.swap(other.name_);
+//     tags_.swap(other.tags_);
+//     fields_.swap(other.fields_);
+//     std::swap(timestamp_, other.timestamp_);
+// }
+
 Measurement::Measurement(const std::string& name, Timestamp timestamp)
     : name_(name)
     , timestamp_(timestamp)
@@ -183,4 +191,20 @@ influx::Measurement& operator<<(influx::Measurement& measurement, const influx::
 {
     measurement.SetTimestamp(timestamp);
     return measurement;   
+}
+
+
+influx::Measurement operator<<(influx::Measurement&& measurement, const influx::Tag& tag)
+{
+    return std::move(measurement << tag);
+}
+
+influx::Measurement operator<<(influx::Measurement&& measurement, const influx::Field& field)
+{
+    return std::move(measurement << field);
+}
+
+influx::Measurement operator<<(influx::Measurement&& measurement, const influx::Timestamp& timestamp)
+{
+    return std::move(measurement << timestamp);
 }

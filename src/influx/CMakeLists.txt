@@ -1,12 +1,12 @@
 add_library(influx-cpp STATIC
     bucket.cc
     bucket.hh
+    client.cc
+    client.hh
     influx.cc
     influx.hh
     measurement.cc
     measurement.hh
-    transport.cc
-    transport.hh
     types.hh
 )
 

@@ -9,16 +9,20 @@
 namespace influx {
 
 class Bucket;
+class Measurement;
 
-class InfluxDB {
+class Influx {
 public:
-    InfluxDB() = delete;
-    InfluxDB(const std::string& host, const std::string& org, const std::string& token);
-    ~InfluxDB();
+    Influx() = delete;
+    Influx(const std::string& host, const std::string& org, const std::string& token);
+    ~Influx();
 
-    Bucket CreateBucket(const std::string& name, std::chrono::seconds& dataRetention);
+    Bucket CreateBucket(const std::string& name, const std::chrono::seconds& dataRetention);
     Bucket GetBucket(const std::string& name);
     std::vector<Bucket> ListBuckets();
+    void DeleteBucket(Bucket& name);
+
+    std::vector<Measurement> Query(const std::string& flux);
 
 private:
     struct Priv;

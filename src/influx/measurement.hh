@@ -30,6 +30,7 @@ bool operator<(const influx::Field& lhs, const influx::Field& rhs);
 class Measurement {
 public:
     Measurement() = delete;
+    // Measurement(Measurement&& other);
     Measurement(const std::string& name, Timestamp timestamp = Clock::now());
     Measurement(const std::string& name, const std::set<Tag>& tags, const std::set<Field>& fields, Timestamp timestamp = Clock::now());
     ~Measurement() = default;
@@ -66,6 +67,10 @@ class NamingRestrictionError: public InfluxError {
 
 /* Output measurment to ostream in line protocol format precision=ns */
 std::ostream& operator<<(std::ostream& os, const influx::Measurement& measurement);
+
+influx::Measurement operator<<(influx::Measurement&& measurement, const influx::Tag& tag);
+influx::Measurement operator<<(influx::Measurement&& measurement, const influx::Field& tag);
+influx::Measurement operator<<(influx::Measurement&& measurement, const influx::Timestamp& tag);
 
 influx::Measurement& operator<<(influx::Measurement& measurement, const influx::Tag& tag);
 influx::Measurement& operator<<(influx::Measurement& measurement, const influx::Field& field);

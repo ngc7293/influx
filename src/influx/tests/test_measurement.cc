@@ -6,7 +6,7 @@
 
 using namespace std::chrono_literals;
 
-TEST(MeasurementTest, outputs_correctly_as_line_protocol)
+TEST(MeasurementTest, should_respect_line_protocol_format)
 {
     influx::Measurement m("m");
 
@@ -24,7 +24,7 @@ TEST(MeasurementTest, outputs_correctly_as_line_protocol)
     EXPECT_EQ(ss.str(), "m key1=value1,key2=value2 field1=0,field2=false,field3=1i,field4=0u 1000");
 }
 
-TEST(MeasurementTest, escapes_correctly)
+TEST(MeasurementTest, should_escape_characters_correctly)
 {
     influx::Measurement m("my measurement", influx::Timestamp(1000ns));
 
@@ -38,7 +38,7 @@ TEST(MeasurementTest, escapes_correctly)
     EXPECT_EQ(ss.str(), R"(my\ measurement key\,2=🚀,key\=1=value\ 1 field2="\"a\" is different from \"\\\"" 1000)");
 }
 
-TEST(MeasurementTest, throws_is_trying_to_output_empty_measurement)
+TEST(MeasurementTest, should_throw_if_trying_to_output_empty_measurement)
 {
     try {
         std::stringstream ss;
@@ -47,7 +47,7 @@ TEST(MeasurementTest, throws_is_trying_to_output_empty_measurement)
     } catch (influx::EmptyMeasurementError& e) { }
 }
 
-TEST(MeasurementTest, throws_if_tag_or_field_key_is_empty)
+TEST(MeasurementTest, should_throw_if_tag_or_field_key_is_empty)
 {
     try {
         influx::Tag{"", "value"};
@@ -60,7 +60,7 @@ TEST(MeasurementTest, throws_if_tag_or_field_key_is_empty)
     } catch (influx::EmptyKeyError& e) { }
 }
 
-TEST(MeasurementTest, throws_if_tag_or_field_key_begins_with_underscore)
+TEST(MeasurementTest, should_throw_if_tag_or_field_key_begins_with_underscore)
 {
     try {
         influx::Tag{"_id", "value"};

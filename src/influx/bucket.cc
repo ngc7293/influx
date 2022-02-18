@@ -1,16 +1,29 @@
 #include <deque>
+#include <iostream>  // FIXME: remove
 #include <sstream>
 
+#include <cassert>
+
 #include <influx/bucket.hh>
+#include <influx/client.hh>
 
 namespace influx {
 
 struct Bucket::Priv {
+    // From API
+    std::string id;
     std::string name;
+    std::string orgId;
 
-    size_t batchSize;
+    // Local data
+    transport::HttpClient client;  
     std::deque<Measurement> buffer;
 };
+
+Bucket::Bucket()
+    : d_(new Priv)
+{
+}
 
 Bucket::Bucket(Bucket&& other)
     : d_(new Priv)
@@ -18,10 +31,9 @@ Bucket::Bucket(Bucket&& other)
     d_.swap(other.d_);
 }
 
-Bucket::Bucket(const std::string& name)
-    : d_(new Priv)
+Bucket::Bucket(const std::string& id, const std::string& name, const std::string& orgId, transport::HttpClient&& client)
+    : d_(new Priv{id, name, orgId, std::move(client)})
 {
-    d_->name = name;
 }
 
 Bucket::~Bucket()
@@ -30,41 +42,66 @@ Bucket::~Bucket()
 
 void Bucket::Write(const Measurement& measurement)
 {
-    d_->buffer.push_back(measurement);
-
-    if (d_->buffer.size() >= d_->batchSize) {
-        Flush();
+    if (d_->id.empty()) {
+        throw NullBucketError();
     }
+
+    d_->buffer.push_back(measurement);
 }
 
 void Bucket::Write(const std::vector<Measurement>& measurements)
 {
+    if (d_->id.empty()) {
+        throw NullBucketError();
+    }
+
     for (const Measurement& measurement: measurements) {
         Write(measurement);
     }
 }
 
-std::vector<Measurement> Query(const std::string query)
-{
-    return {};
-}
-
 void Bucket::Flush()
 {
+    if (d_->id.empty()) {
+        throw NullBucketError();
+    }
+
     std::stringstream sbuf;
     for (const Measurement& measurement: d_->buffer) {
         sbuf << measurement << std::endl;
     }
+
+    d_->client.Post(
+        "/api/v2/write?bucket=" + d_->id,
+        sbuf.str()
+    );
+
+    d_->buffer.clear();
 }
 
-void Bucket::SetBatchSize(size_t size)
+std::size_t Bucket::BufferedMeasurementsCount() const
 {
-    d_->batchSize = size;
+    return d_->buffer.size();
+}
+
+std::string Bucket::id() const
+{
+    return d_->id;
 }
 
 std::string Bucket::name() const
 {
     return d_->name;
+}
+
+std::string Bucket::orgId() const
+{
+    return d_->orgId;
+}
+
+bool Bucket::is_system_bucket() const
+{
+    return d_->name.starts_with("_");
 }
 
 } // namespace
