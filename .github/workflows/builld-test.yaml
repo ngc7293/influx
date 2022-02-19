@@ -72,4 +72,4 @@ jobs:
 
       - name: Test
         working-directory: build
-        run: ctest --rerun-failed --output-on-failure
+        run: bin/influx.test --gtest_filter='-InfluxTest*:BucketTest*'  # These tests require a functional Influx
