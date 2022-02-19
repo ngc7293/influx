@@ -46,9 +46,11 @@ TEST_F(InfluxTest, should_prevent_creation_of_bucket_with_too_short_retention_po
 
 TEST_F(InfluxTest, should_list_all_buckets)
 {
-    std::vector<std::string> expected = {
-        "test-bucket-a",
-        "test-bucket-b"
+    std::vector<std::pair<std::string, bool>> expected = {
+        {"_monitoring", true},
+        {"_tasks", true},
+        {"test-bucket-a", false},
+        {"test-bucket-b", false}
     };
 
     auto bucket_a = db.CreateBucket("test-bucket-a", 1h);
@@ -57,13 +59,13 @@ TEST_F(InfluxTest, should_list_all_buckets)
     auto buckets = db.ListBuckets();
     for (const auto& expect: expected) {
         auto it = std::find_if(buckets.begin(), buckets.end(), [&](const auto& bucket) {
-            return expect == bucket.name();
+            return expect.first == bucket.name() && expect.second == bucket.is_system_bucket();
         });
 
-        EXPECT_NE(it, buckets.end()) << "Did not find expected bucket '" << expect << "'";
+        EXPECT_NE(it, buckets.end()) << "Did not find expected bucket '" << expect.first << "'";
     }
 
-    // If you fail here, check that your token is not an all-access token.
+    // If you fail here, check that your token is an all-access token.
     EXPECT_EQ(buckets.size(), expected.size());
 }
 
