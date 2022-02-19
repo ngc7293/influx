@@ -13,20 +13,20 @@ TEST(MeasurementTest, should_respect_line_protocol_format)
     m << influx::Tag{"key1", "value1"}
       << influx::Field{"field2", false}
       << influx::Tag{"key2", "value2"}
-      << influx::Timestamp(1000ns)
+      << influx::Timestamp(1000ms)
       << influx::Field{"field1", 0.0}
       << influx::Field{"field3", 1}
-      << influx::Field{"field4", 0ul};
+      << influx::Field{"field4", 0ull};
 
     std::stringstream ss;
     ss << m;
 
-    EXPECT_EQ(ss.str(), "m key1=value1,key2=value2 field1=0,field2=false,field3=1i,field4=0u 1000");
+    EXPECT_EQ(ss.str(), "m key1=value1,key2=value2 field1=0,field2=false,field3=1i,field4=0u 1000000000");
 }
 
 TEST(MeasurementTest, should_escape_characters_correctly)
 {
-    influx::Measurement m("my measurement", influx::Timestamp(1000ns));
+    influx::Measurement m("my measurement", influx::Timestamp(1000ms));
 
     m << influx::Tag{"key=1", "value 1"}
       << influx::Field{"field2", R"("a" is different from "\")"}
@@ -35,14 +35,15 @@ TEST(MeasurementTest, should_escape_characters_correctly)
     std::stringstream ss;
     ss << m;
 
-    EXPECT_EQ(ss.str(), R"(my\ measurement key\,2=🚀,key\=1=value\ 1 field2="\"a\" is different from \"\\\"" 1000)");
+    std::string expected = R"(my\ measurement key\,2=🚀,key\=1=value\ 1 field2="\"a\" is different from \"\\\"" 1000000000)";
+    EXPECT_EQ(ss.str(), expected);
 }
 
 TEST(MeasurementTest, should_throw_if_trying_to_output_empty_measurement)
 {
     try {
         std::stringstream ss;
-        ss << influx::Measurement("m", influx::Timestamp(1000ns));
+        ss << influx::Measurement("m", influx::Timestamp(1000ms));
         EXPECT_FALSE(true);
     } catch (influx::EmptyMeasurementError& e) { }
 }

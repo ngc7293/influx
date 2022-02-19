@@ -1,10 +1,11 @@
-#include <iostream>
+#include <algorithm>
 
 #include <cassert>
 #include <cstring>
 
 #include <influx/client.hh>
 
+#define NOMINMAX
 #include <curl/curl.h>
 
 namespace influx::transport {
@@ -19,7 +20,7 @@ namespace {
         std::string body;
     };
 
-    std::size_t ReadCallback(char *buffer, size_t size, size_t nitems, void *userdata)
+    std::size_t ReadCallback(char *buffer, std::size_t size, std::size_t nitems, void *userdata)
     {
         ReadCallbackData& data = *(static_cast<ReadCallbackData*>(userdata));
         std::size_t readSize = std::min(data.body.length() - data.cursor, size * nitems);
@@ -28,12 +29,12 @@ namespace {
             return 0;
         }
 
-        memcpy(buffer, data.body.c_str() + data.cursor, readSize);
+        memcpy(static_cast<void*>(buffer), data.body.c_str() + data.cursor, readSize);
         data.cursor += readSize;
         return readSize;
     }
 
-    std::size_t WriteCallback(char *ptr, size_t size, size_t nmemb, void *userdata)
+    std::size_t WriteCallback(const char *ptr, std::size_t size, std::size_t nmemb, void *userdata)
     {
         WriteCallbackData& data = *(static_cast<WriteCallbackData*>(userdata));
         std::string str(ptr, size * nmemb);
@@ -109,7 +110,7 @@ HttpResponse HttpClient::Delete(
     const std::vector<std::pair<std::string, std::string>> headers
 )
 {
-    return Perform(Verb::DELETE, endpoint, body, headers);
+    return Perform(Verb::ELETE, endpoint, body, headers);
 }
 
 HttpResponse HttpClient::Perform(
@@ -132,7 +133,7 @@ HttpResponse HttpClient::Perform(
             curl_easy_setopt(d_->handle, CURLOPT_POST, 1);
             curl_easy_setopt(d_->handle, CURLOPT_POSTFIELDSIZE, source.body.length());
             break;
-        case Verb::DELETE:
+        case Verb::ELETE:
             curl_easy_setopt(d_->handle, CURLOPT_CUSTOMREQUEST, "DELETE");
             curl_easy_setopt(d_->handle, CURLOPT_POSTFIELDSIZE, source.body.length());
             break;

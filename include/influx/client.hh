@@ -1,5 +1,5 @@
-#ifndef INFLUX_TRANSPORT_HH_
-#define INFLUX_TRANSPORT_HH_
+#ifndef INFLUX_CLIENT_HH_
+#define INFLUX_CLIENT_HH_
 
 #include <memory>
 #include <string>
@@ -15,7 +15,7 @@ enum class Verb {
     GET,
     POST,
     PUT,
-    DELETE
+    ELETE
 };
 
 struct HttpResponse {
