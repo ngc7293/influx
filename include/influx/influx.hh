@@ -13,10 +13,13 @@ class Measurement;
 
 class Influx {
 public:
-    Influx() = delete;
+    Influx();
     Influx(Influx&& other);
+    Influx& operator=(Influx&& other);
     Influx(const Influx& other);
+    Influx& operator=(const Influx& other);
     Influx(const std::string& host, const std::string& org, const std::string& token);
+
     ~Influx();
 
     Bucket CreateBucket(const std::string& name, const std::chrono::seconds& dataRetention);

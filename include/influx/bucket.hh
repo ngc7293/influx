@@ -14,8 +14,13 @@ class Bucket {
 public:
     Bucket();
     Bucket(Bucket&& other);
+    Bucket& operator=(Bucket&& other);
     Bucket(const Bucket& other);
+    Bucket& operator=(const Bucket& other);
+
     ~Bucket();
+
+    operator bool() const;
 
     void Write(const Measurement& seasurement);
     void Write(const std::vector<Measurement>& seasurements);

@@ -28,12 +28,25 @@ Bucket::Bucket()
 Bucket::Bucket(Bucket&& other)
     : d_(new Priv)
 {
+    *this = std::move(other);
+}
+
+Bucket& Bucket::operator=(Bucket&& other)
+{
     d_.swap(other.d_);
+    return *this;
 }
 
 Bucket::Bucket(const Bucket& other)
-    : d_(new Priv{other.d_->id, other.d_->name, other.d_->orgId, other.d_->client})
+    : d_(new Priv)
 {
+    *this = other;
+}
+
+Bucket& Bucket::operator=(const Bucket& other)
+{
+    d_.reset(new Priv{other.d_->id, other.d_->name, other.d_->orgId, other.d_->client});
+    return *this;
 }
 
 Bucket::Bucket(const std::string& id, const std::string& name, const std::string& orgId, transport::HttpClient&& client)
@@ -41,13 +54,19 @@ Bucket::Bucket(const std::string& id, const std::string& name, const std::string
 {
 }
 
+
 Bucket::~Bucket()
 {
 }
 
+Bucket::operator bool() const
+{
+    return !(d_->id.empty() || d_->orgId.empty());
+}
+
 void Bucket::Write(const Measurement& measurement)
 {
-    if (d_->id.empty()) {
+    if (!*this) {
         throw NullBucketError();
     }
 
@@ -56,7 +75,7 @@ void Bucket::Write(const Measurement& measurement)
 
 void Bucket::Write(const std::vector<Measurement>& measurements)
 {
-    if (d_->id.empty()) {
+    if (!*this) {
         throw NullBucketError();
     }
 
@@ -67,7 +86,7 @@ void Bucket::Write(const std::vector<Measurement>& measurements)
 
 void Bucket::Flush()
 {
-    if (d_->id.empty()) {
+    if (!*this) {
         throw NullBucketError();
     }
 

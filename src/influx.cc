@@ -16,16 +16,31 @@ struct Influx::Priv {
 Influx::Influx(Influx&& other)
     : d_(new Priv)
 {
-    d_.swap(other.d_);
+    *this = std::move(other);
 }
-Influx::Influx(const Influx& other)
-    : d_(new Priv{other.d_->client, other.d_->org})
+
+Influx& Influx::operator=(Influx&& other)
 {
+    d_.swap(other.d_);
+    return *this;
+}
+
+Influx::Influx(const Influx& other)
+    : d_(new Priv)
+{
+    *this = other;
+}
+
+Influx& Influx::operator=(const Influx& other)
+{
+    d_.reset(new Priv{other.d_->client, other.d_->org});
+    return *this;
 }
 
 Influx::Influx(const std::string& host, const std::string& org, const std::string& token)
     : d_(new Priv{{host, org, token}, org})
 {
+    // TODO: Check provided parameter validity with dummy request
 }
 
 Influx::~Influx()
