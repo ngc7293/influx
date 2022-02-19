@@ -69,23 +69,35 @@ Field::Field(const std::string& key, const FieldValue& value)
     }
 }
 
+bool operator==(const Tag& lhs, const Tag& rhs)
+{
+    return lhs.key == rhs.key && lhs.value == rhs.value;
+}
+
+bool operator!=(const Tag& lhs, const Tag& rhs)
+{
+    return !(lhs == rhs);
+}
+
 bool operator<(const Tag& lhs, const Tag& rhs)
 {
     return lhs.key.compare(rhs.key) < 0;
+}
+
+bool operator==(const Field& lhs, const Field& rhs)
+{
+    return lhs.key == rhs.key && lhs.value == rhs.value;
+}
+
+bool operator!=(const Field& lhs, const Field& rhs)
+{
+    return !(lhs == rhs);
 }
 
 bool operator<(const Field& lhs, const Field& rhs)
 {
     return lhs.key.compare(rhs.key) < 0;
 }
-
-// Measurement::Measurement(Measurement&& other)
-// {
-//     name_.swap(other.name_);
-//     tags_.swap(other.tags_);
-//     fields_.swap(other.fields_);
-//     std::swap(timestamp_, other.timestamp_);
-// }
 
 Measurement::Measurement(const std::string& name, Timestamp timestamp)
     : name_(name)
@@ -99,6 +111,19 @@ Measurement::Measurement(const std::string& name, const std::set<Tag>& tags, con
     , fields_(fields)
     , timestamp_(timestamp)
 {
+}
+
+bool Measurement::operator==(const Measurement& other) const
+{
+    return name_ == other.name_ 
+        && timestamp_ == other.timestamp_
+        && tags_ == other.tags_
+        && fields_ == other.fields_;
+}
+
+bool Measurement::operator!=(const Measurement& other) const
+{
+    return !(*this == other);
 }
 
  void Measurement::AddTag(const Tag& tag)
@@ -134,8 +159,6 @@ const std::set<Field>& Measurement::fields() const
 Timestamp Measurement::timestamp() const
 {
     return timestamp_;
-}
-
 }
 
 std::ostream& operator<<(std::ostream& os, const influx::Measurement& measurement)
@@ -174,6 +197,8 @@ std::ostream& operator<<(std::ostream& os, const influx::Measurement& measuremen
     os << " " << std::chrono::duration_cast<std::chrono::nanoseconds>(measurement.timestamp().time_since_epoch()).count();
     return os;
 }
+
+} // namespace
 
 influx::Measurement& operator<<(influx::Measurement& measurement, const influx::Tag& tag)
 {

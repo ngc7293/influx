@@ -73,3 +73,40 @@ TEST(MeasurementTest, should_throw_if_tag_or_field_key_begins_with_underscore)
         EXPECT_FALSE(true);
     } catch (influx::NamingRestrictionError& e) { }
 }
+
+TEST(MeasurementTest, should_be_copyable)
+{
+    influx::Measurement m = influx::Measurement("a", influx::Timestamp(1000ms));
+    m = influx::Measurement("b", influx::Timestamp(42ms));
+
+    influx::Measurement n = influx::Measurement("a", influx::Timestamp(1000ms));
+    m = n;
+}
+
+TEST(MeasurementTest, should_be_comparable)
+{
+    EXPECT_EQ(
+        (influx::Measurement("a", influx::Timestamp(1000ms)) << influx::Field{"d", 1} << influx::Tag{"e", "val"}),
+        (influx::Measurement("a", influx::Timestamp(1000ms)) << influx::Field{"d", 1} << influx::Tag{"e", "val"})
+    );
+
+    EXPECT_NE(
+        (influx::Measurement("a", influx::Timestamp(1000ms)) << influx::Field{"d", 1} << influx::Tag{"e", "val"}),
+        (influx::Measurement("a", influx::Timestamp(1000ms)) << influx::Field{"d", 1} << influx::Tag{"e", "notval"})
+    );
+
+    EXPECT_NE(
+        (influx::Measurement("a", influx::Timestamp(1000ms)) << influx::Field{"d", 1} << influx::Tag{"e", "val"}),
+        (influx::Measurement("a", influx::Timestamp(1000ms)) << influx::Field{"f", 1} << influx::Tag{"e", "val"})
+    );
+
+    EXPECT_NE(
+        (influx::Measurement("a", influx::Timestamp(1000ms)) << influx::Field{"d", 1} << influx::Tag{"e", "val"}),
+        (influx::Measurement("a", influx::Timestamp(  42ms)) << influx::Field{"d", 1} << influx::Tag{"e", "val"})
+    );
+
+    EXPECT_NE(
+        (influx::Measurement("a", influx::Timestamp(1000ms)) << influx::Field{"d", 1} << influx::Tag{"e", "val"}),
+        (influx::Measurement("b", influx::Timestamp(1000ms)) << influx::Field{"d", 1} << influx::Tag{"e", "val"})
+    );
+}

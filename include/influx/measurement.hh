@@ -24,16 +24,23 @@ struct Field {
     Field(const std::string& key, const FieldValue& value);
 };
 
+bool operator==(const influx::Tag& lhs, const influx::Tag& rhs);
+bool operator!=(const influx::Tag& lhs, const influx::Tag& rhs);
 bool operator<(const influx::Tag& lhs, const influx::Tag& rhs);
+
+bool operator==(const influx::Field& lhs, const influx::Field& rhs);
+bool operator!=(const influx::Field& lhs, const influx::Field& rhs);
 bool operator<(const influx::Field& lhs, const influx::Field& rhs);
 
 class Measurement {
 public:
     Measurement() = delete;
-    // Measurement(Measurement&& other);
     Measurement(const std::string& name, Timestamp timestamp = Clock::now());
     Measurement(const std::string& name, const std::set<Tag>& tags, const std::set<Field>& fields, Timestamp timestamp = Clock::now());
     ~Measurement() = default;
+
+    bool operator==(const Measurement& other) const;
+    bool operator!=(const Measurement& other) const;
 
     void AddTag(const Tag& tag);
     void AddField(const Field& field);
@@ -63,10 +70,10 @@ class NamingRestrictionError: public InfluxError {
     const char* what() const throw() override { return "Field and Tag keys cannot being with '_'"; }
 };
 
+::std::ostream& operator<<(::std::ostream& os, const Measurement& measurement);
 } // namespace
 
 /* Output measurment to ostream in line protocol format precision=ns */
-std::ostream& operator<<(std::ostream& os, const influx::Measurement& measurement);
 
 influx::Measurement operator<<(influx::Measurement&& measurement, const influx::Tag& tag);
 influx::Measurement operator<<(influx::Measurement&& measurement, const influx::Field& tag);

@@ -95,4 +95,13 @@ TEST_F(BucketTest, should_throw_if_flusing_null_bucket)
     }
 }
 
+TEST_F(BucketTest, should_be_comparable)
+{
+    auto first = db.CreateBucket("bucket-a", 1h);
+    auto second = db.CreateBucket("bucket-b", 1h);
+    auto third = first;
 
+    EXPECT_EQ(influx::Bucket(), influx::Bucket());
+    EXPECT_EQ(first, third);
+    EXPECT_NE(first, second);
+}

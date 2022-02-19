@@ -62,12 +62,9 @@ Bucket Influx::CreateBucket(const std::string& name, const std::chrono::seconds&
         }}}
     };
 
-    auto response = d_->client.Post(
-        "/api/v2/buckets",
-        body.dump()
-    );
-
+    auto response = d_->client.Post("/api/v2/buckets", body.dump());
     auto data = nlohmann::json::parse(response.body);
+
     return Bucket(
         data["id"],
         data["name"],
@@ -78,11 +75,13 @@ Bucket Influx::CreateBucket(const std::string& name, const std::chrono::seconds&
 
 Bucket Influx::GetBucket(const std::string& id)
 {
-    auto response = d_->client.Get(
-        "/api/v2/buckets/" + id
-    );
+    if (id.empty()) {
+        return Bucket();
+    }
 
+    auto response = d_->client.Get("/api/v2/buckets/" + id);
     auto data = nlohmann::json::parse(response.body);
+
     return Bucket(
         data["id"],
         data["name"],
@@ -93,10 +92,7 @@ Bucket Influx::GetBucket(const std::string& id)
 
 std::vector<Bucket> Influx::ListBuckets()
 {
-    auto response = d_->client.Get(
-        "/api/v2/buckets"
-    );
-
+    auto response = d_->client.Get("/api/v2/buckets");
     auto data = nlohmann::json::parse(response.body);
 
     std::vector<Bucket> result;
@@ -114,11 +110,12 @@ std::vector<Bucket> Influx::ListBuckets()
 
 void Influx::DeleteBucket(Bucket& bucket)
 {
-    auto response = d_->client.Delete(
-        "/api/v2/buckets/" + bucket.id()
-    );
+    if (!bucket) {
+        return;
+    }
 
-    (void) Bucket(std::move(bucket));
+    d_->client.Delete("/api/v2/buckets/" + bucket.id());
+    bucket = Bucket();
 }
 
 std::vector<Measurement> Influx::Query(const std::string& flux)
@@ -132,7 +129,6 @@ std::vector<Measurement> Influx::Query(const std::string& flux)
         }
     );
 
-    std::cout << response.status << " '" << response.body << "'" << std::endl;
     return {};
 }
 

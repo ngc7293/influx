@@ -89,6 +89,11 @@ TEST_F(InfluxTest, should_get_single_bucket)
     }
 }
 
+TEST_F(InfluxTest, should_return_invalid_bucket_if_id_empty)
+{
+    EXPECT_FALSE(db.GetBucket(""));
+}
+
 TEST_F(InfluxTest, should_query_data)
 {
     auto bucket = db.CreateBucket("test-bucket-a", 1h);

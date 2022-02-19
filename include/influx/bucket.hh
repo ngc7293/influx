@@ -21,6 +21,8 @@ public:
     ~Bucket();
 
     operator bool() const;
+    bool operator==(const Bucket& other) const;
+    bool operator!=(const Bucket& other) const;
 
     void Write(const Measurement& seasurement);
     void Write(const std::vector<Measurement>& seasurements);

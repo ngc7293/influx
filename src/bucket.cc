@@ -64,6 +64,16 @@ Bucket::operator bool() const
     return !(d_->id.empty() || d_->orgId.empty());
 }
 
+bool Bucket::operator==(const Bucket& other) const
+{
+    return d_->id == other.d_->id;
+}
+
+bool Bucket::operator!=(const Bucket& other) const
+{
+    return !(*this == other);
+}
+
 void Bucket::Write(const Measurement& measurement)
 {
     if (!*this) {
