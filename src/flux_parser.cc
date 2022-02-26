@@ -125,9 +125,9 @@ std::vector<FluxTable> FluxParser::parse(const std::string& body)
                     } else if (columns[i - 1].type == "boolean") {
                         record.value = (token == "true");
                     } else if (columns[i - 1].type == "unsignedLong") {
-                        record.value = std::stoul(token);
+                        record.value = static_cast<std::uint64_t>(std::stoull(token));
                     } else if (columns[i - 1].type == "long") {
-                        record.value = std::stol(token);
+                        record.value = static_cast<std::int64_t>(std::stoll(token));
                     } else {
                         record.value = token;
                     }
