@@ -6,10 +6,11 @@
 #include <string>
 #include <vector>
 
-namespace influx {
+#include <influx/bucket.hh>
+#include <influx/measurement.hh>
+#include <influx/flux_parser.hh>
 
-class Bucket;
-class Measurement;
+namespace influx {
 
 class Influx {
 public:
@@ -27,7 +28,8 @@ public:
     std::vector<Bucket> ListBuckets();
     void DeleteBucket(Bucket& name);
 
-    std::vector<Measurement> Query(const std::string& flux);
+    std::string QueryRaw(const std::string& flux);
+    std::vector<FluxTable> Query(const std::string& flux);
 
     Bucket operator[](const std::string& id);
 

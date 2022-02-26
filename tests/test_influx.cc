@@ -32,6 +32,12 @@ TEST_F(InfluxTest, should_create_and_delete_buckets)
     EXPECT_EQ(bucket.id(), "");
 }
 
+TEST_F(InfluxTest, should_allow_infinite_retention_buckets)
+{
+    auto bucket = db.CreateBucket("bucket" + influx::test::nowstring(), 0s);
+    EXPECT_NE(bucket.id(), "");
+}
+
 TEST_F(InfluxTest, should_prevent_creation_of_bucket_with_too_short_retention_policy)
 {
     try {
@@ -94,18 +100,4 @@ TEST_F(InfluxTest, should_get_single_bucket)
 TEST_F(InfluxTest, should_return_invalid_bucket_if_id_empty)
 {
     EXPECT_FALSE(db.GetBucket(""));
-}
-
-TEST_F(InfluxTest, should_query_data)
-{
-    auto bucket = db.CreateBucket("test-bucket-a", 1h);
-
-    bucket << (influx::Measurement("m") << influx::Field{"val", 42});
-    bucket.Flush();
-    auto result = db.Query(R"~~(
-        from(bucket: "test-bucket-a")
-            |> range(start: -1m)
-            |> filter(fn: (r) => r._field == "val")
-            |> yield(name: "val")
-    )~~");
 }

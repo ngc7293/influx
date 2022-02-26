@@ -58,19 +58,21 @@ private:
     Timestamp timestamp_;
 };
 
-class EmptyMeasurementError: public InfluxError {
-    const char* what() const throw() override { return "Cannot serialize empty Measurement"; }
-};
+class InvalidMeasurementError: public InfluxError {
+public:
+    InvalidMeasurementError(const char* what)
+        : what_(what)
+    {
+    }
 
-class EmptyKeyError: public InfluxError {
-    const char* what() const throw() override { return "Field and Tag keys cannot be empty"; }
-};
+    const char* what() const throw() override { return what_; }
 
-class NamingRestrictionError: public InfluxError {
-    const char* what() const throw() override { return "Field and Tag keys cannot being with '_'"; }
+private:
+    const char* what_ = "Invalid measurement";
 };
 
 ::std::ostream& operator<<(::std::ostream& os, const Measurement& measurement);
+
 } // namespace
 
 /* Output measurment to ostream in line protocol format precision=ns */

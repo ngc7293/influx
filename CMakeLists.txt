@@ -10,11 +10,13 @@ endif()
 add_library(influx STATIC
     include/influx/bucket.hh
     include/influx/client.hh
+    include/influx/flux_parser.hh
     include/influx/influx.hh
     include/influx/measurement.hh
     include/influx/types.hh
     src/bucket.cc
     src/client.cc
+    src/flux_parser.cc
     src/influx.cc
     src/measurement.cc
 )

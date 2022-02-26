@@ -48,11 +48,11 @@ Tag::Tag(const std::string& key, const std::string& value)
     , value(value)
 {
     if (key.length() == 0) {
-        throw EmptyKeyError();
+        throw InvalidMeasurementError("Tag keys cannot be empty");
     }
 
     if (key[0] == '_') {
-        throw NamingRestrictionError();
+        throw InvalidMeasurementError("Tag keys cannot being with '_'");
     }
 }
 
@@ -61,11 +61,11 @@ Field::Field(const std::string& key, const FieldValue& value)
     , value(value)
 {
     if (key.length() == 0) {
-        throw EmptyKeyError();
+        throw InvalidMeasurementError("Field keys cannot be empty");
     }
 
     if (key[0] == '_') {
-        throw NamingRestrictionError();
+        throw InvalidMeasurementError("Field keys cannot being with '_'");
     }
 }
 
@@ -164,31 +164,19 @@ Timestamp Measurement::timestamp() const
 std::ostream& operator<<(std::ostream& os, const influx::Measurement& measurement)
 {
     if (measurement.fields().empty()) {
-        throw influx::EmptyMeasurementError();
+        throw influx::InvalidMeasurementError("Cannot serialize empty Measurement");
     }
 
-    os << Escape(measurement.name(), " ,") << " ";
+    os << Escape(measurement.name(), " ,");
+
+    for (const influx::Tag& tag: measurement.tags()) {
+        os << "," << Escape(tag.key, " =,") << "=" << Escape(tag.value, " =,");
+    }
 
     bool first = true;
-    for (const influx::Tag& tag: measurement.tags()) {
-        if (!first) {
-            os << ",";
-        }
-
-        os << Escape(tag.key, " =,") << "=" << Escape(tag.value, " =,");
-        first = false;
-    }
-
-
-    os << " ";
-
-    first = true;
     FieldValuePrinter printer{os};
     for (const influx::Field& field: measurement.fields()) {
-        if (!first) {
-            os << ",";
-        }
-
+        os << (first ? " " : ",");
         os << Escape(field.key, " =,") << "=";
         std::visit(printer, field.value);
         first = false;

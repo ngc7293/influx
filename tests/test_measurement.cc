@@ -21,7 +21,7 @@ TEST(MeasurementTest, should_respect_line_protocol_format)
     std::stringstream ss;
     ss << m;
 
-    EXPECT_EQ(ss.str(), "m key1=value1,key2=value2 field1=0,field2=false,field3=1i,field4=0u 1000000000");
+    EXPECT_EQ(ss.str(), "m,key1=value1,key2=value2 field1=0,field2=false,field3=1i,field4=0u 1000000000");
 }
 
 TEST(MeasurementTest, should_escape_characters_correctly)
@@ -35,7 +35,7 @@ TEST(MeasurementTest, should_escape_characters_correctly)
     std::stringstream ss;
     ss << m;
 
-    std::string expected = R"(my\ measurement key\,2=🚀,key\=1=value\ 1 field2="\"a\" is different from \"\\\"" 1000000000)";
+    std::string expected = R"(my\ measurement,key\,2=🚀,key\=1=value\ 1 field2="\"a\" is different from \"\\\"" 1000000000)";
     EXPECT_EQ(ss.str(), expected);
 }
 
@@ -45,7 +45,7 @@ TEST(MeasurementTest, should_throw_if_trying_to_output_empty_measurement)
         std::stringstream ss;
         ss << influx::Measurement("m", influx::Timestamp(1000ms));
         EXPECT_FALSE(true);
-    } catch (influx::EmptyMeasurementError& e) { }
+    } catch (influx::InvalidMeasurementError& e) { }
 }
 
 TEST(MeasurementTest, should_throw_if_tag_or_field_key_is_empty)
@@ -53,12 +53,12 @@ TEST(MeasurementTest, should_throw_if_tag_or_field_key_is_empty)
     try {
         influx::Tag{"", "value"};
         EXPECT_FALSE(true);
-    } catch (influx::EmptyKeyError& e) { }
+    } catch (influx::InvalidMeasurementError& e) { }
 
     try {
         influx::Field{"", "value"};
         EXPECT_FALSE(true);
-    } catch (influx::EmptyKeyError& e) { }
+    } catch (influx::InvalidMeasurementError& e) { }
 }
 
 TEST(MeasurementTest, should_throw_if_tag_or_field_key_begins_with_underscore)
@@ -66,12 +66,12 @@ TEST(MeasurementTest, should_throw_if_tag_or_field_key_begins_with_underscore)
     try {
         influx::Tag{"_id", "value"};
         EXPECT_FALSE(true);
-    } catch (influx::NamingRestrictionError& e) { }
+    } catch (influx::InvalidMeasurementError& e) { }
 
     try {
         influx::Field{"_oola", "value"};
         EXPECT_FALSE(true);
-    } catch (influx::NamingRestrictionError& e) { }
+    } catch (influx::InvalidMeasurementError& e) { }
 }
 
 TEST(MeasurementTest, should_be_copyable)

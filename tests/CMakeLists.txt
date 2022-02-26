@@ -2,6 +2,7 @@ add_executable(influx.test
     config.hh
     main.cpp
     test_bucket.cc
+    test_flux_parser.cc
     test_influx.cc
     test_measurement.cc
 )

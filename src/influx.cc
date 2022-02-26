@@ -1,8 +1,7 @@
 #include <nlohmann/json.hpp>
 
-#include <influx/bucket.hh>
-#include <influx/influx.hh>
 #include <influx/client.hh>
+#include <influx/influx.hh>
 
 using namespace std::chrono_literals;
 
@@ -49,7 +48,7 @@ Influx::~Influx()
 
 Bucket Influx::CreateBucket(const std::string& name, const std::chrono::seconds& dataRetention)
 {
-    if (dataRetention < 1h) {
+    if (dataRetention < 1h && dataRetention != 0s) {
         throw InfluxError("Retention policy must be at least an hour");
     }
 
@@ -118,18 +117,33 @@ void Influx::DeleteBucket(Bucket& bucket)
     bucket = Bucket();
 }
 
-std::vector<Measurement> Influx::Query(const std::string& flux)
+std::string Influx::QueryRaw(const std::string& flux)
 {
+    nlohmann::json body = {
+        {"dialect", {
+            {"annotations", {"datatype"}},
+            {"dateTimeFormat", "RFC3339Nano"},
+            {"header", true}
+        }},
+        {"query", flux}
+    };
+
     auto response = d_->client.Post(
         "/api/v2/query",
-        flux,
+        body.dump(),        
         {
-            {"Content-Type", "application/vnd.flux"},
+            {"Content-Type", "application/json"},
             {"Accept", "application/vnd.influx.arrow"}
         }
     );
 
-    return {};
+    return response.body;
+}
+
+std::vector<FluxTable> Influx::Query(const std::string& flux)
+{
+    auto response = QueryRaw(flux);
+    return FluxParser().parse(response);
 }
 
 Bucket Influx::operator[](const std::string& id)
