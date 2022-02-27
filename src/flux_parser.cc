@@ -1,9 +1,16 @@
 #include <iostream>
+#include <iomanip>
+#include <chrono>
 #include <sstream>
 
 #include <cassert>
 #include <cstring>
 #include <ctime>
+
+#if (defined _MSC_VER)
+#include <windows.h>
+#include <timezoneapi.h>
+#endif
 
 #include <influx/flux_parser.hh>
 
@@ -17,37 +24,35 @@ namespace {
         std::string type;
     };
 
+    std::chrono::seconds tzbias()
+    {
+#if (defined _MSC_VER)
+        TIME_ZONE_INFORMATION tzinfo;
+        GetTimeZoneInformation(&tzinfo);
+        return std::chrono::seconds(tzinfo.Bias * 60);
+#else
+        return std::chrono::seconds(timezone);
+#endif
+    }
+
     Timestamp parseRFC3339(const std::string& str)
     {
-        struct std::tm then_tm{0};
-        std::memset(&then_tm, 0, sizeof(struct tm));
+        std::istringstream ss(str);
+        struct std::tm tm;
+        std::memset(&tm, 0, sizeof(struct tm));
 
-        strptime(str.c_str(), "%FT%T", &then_tm);
-        time_t then = mktime(&then_tm) - timezone;
+        ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%S");
+        time_t timestamp = mktime(&tm) - tzbias().count();
 
-        auto cur = str.find_first_of('.');
-        std::string dec = "0" + str.substr(cur, str.size() - cur - 1);
-        return Clock::from_time_t(then) + std::chrono::nanoseconds(static_cast<std::uint64_t>(std::stod(dec) * 10e8));
+        double frac = 0;
+        ss >> frac;
+        auto nano = static_cast<std::uint64_t>(frac * 1e9);
+        return Clock::from_time_t(timestamp) + std::chrono::duration_cast<Clock::duration>(std::chrono::nanoseconds(nano));
     }
 }
 
-struct FluxParser::Priv {
-
-};
-
-FluxParser::FluxParser()
-    : d_(new Priv)
-{
-}
-
-FluxParser::~FluxParser()
-{
-}
-
-
 std::vector<FluxTable> FluxParser::parse(const std::string& body)
 {
-    // int currentTable = -1;
     std::stringstream ssbody(body);
 
     std::vector<FluxTable> tables;
@@ -125,6 +130,7 @@ std::vector<FluxTable> FluxParser::parse(const std::string& body)
                     } else if (columns[i - 1].type == "boolean") {
                         record.value = (token == "true");
                     } else if (columns[i - 1].type == "unsignedLong") {
+                        // GCC and MSVC disagree on what a long long is
                         record.value = static_cast<std::uint64_t>(std::stoull(token));
                     } else if (columns[i - 1].type == "long") {
                         record.value = static_cast<std::int64_t>(std::stoll(token));

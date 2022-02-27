@@ -101,3 +101,34 @@ TEST_F(InfluxTest, should_return_invalid_bucket_if_id_empty)
 {
     EXPECT_FALSE(db.GetBucket(""));
 }
+
+TEST_F(InfluxTest, should_return_parsed_query)
+{
+    auto name = influx::test::nowstring();
+    auto bucket = db.CreateBucket(name, 1h);
+    auto now = influx::Clock::now() - std::chrono::seconds(15);
+
+    bucket
+        << (influx::Measurement("acquisition", now +  0s) << influx::Field("x", 20.0) << influx::Field("y", 21.0) << influx::Field("z", 22.0) << influx::Tag("domain", "1"))
+        << (influx::Measurement("acquisition", now +  5s) << influx::Field("x", 10.0) << influx::Field("y", 11.0) << influx::Field("z", 12.0) << influx::Tag("domain", "1"))
+        << (influx::Measurement("fizzbuzz",    now + 10s) << influx::Field("x", 30)   << influx::Field("y", 31.0) << influx::Field("z", 32.0) << influx::Tag("domain", "1") << influx::Tag("client", "2"));
+    bucket.Flush();
+
+    auto tables = db.Query(R"~(
+        from(bucket: ")~" + name + R"~(")
+            |> range(start: -20s)
+            |> filter(fn: (r) => r._field == "x")
+            |> yield(name: "acqui")
+    )~");
+
+    ASSERT_EQ(tables[0].size(), 2);
+    EXPECT_TRUE(std::holds_alternative<double>(tables[0][0].value));
+    EXPECT_EQ(std::get<double>(tables[0][0].value), 20.0);
+    EXPECT_TRUE(std::holds_alternative<double>(tables[0][1].value));
+    EXPECT_EQ(std::get<double>(tables[0][1].value), 10.0);
+
+    ASSERT_EQ(tables.size(), 2);
+    ASSERT_EQ(tables[1].size(), 1);
+    EXPECT_TRUE(std::holds_alternative<std::int64_t>(tables[1][0].value));
+    EXPECT_EQ(std::get<std::int64_t>(tables[1][0].value), 30);
+}

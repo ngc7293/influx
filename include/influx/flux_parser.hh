@@ -25,14 +25,7 @@ using FluxTable = std::vector<FluxRecord>;
 
 class FluxParser {
 public:
-    FluxParser();
-    ~FluxParser();
-
     std::vector<FluxTable> parse(const std::string& body);
-
-private:
-    struct Priv;
-    std::unique_ptr<Priv> d_;
 };
 
 }
