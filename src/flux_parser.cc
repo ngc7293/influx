@@ -118,7 +118,7 @@ std::vector<FluxTable> FluxParser::parse(const std::string& body)
                 if (columns[i - 1].name == "result") {
                     record.name = token;
                 } else if (columns[i - 1].name == "table") {
-                    auto table_id = std::stod(token);
+                    int table_id = std::stoi(token);
 
                     // New table but column definition has stayed the same
                     if (current_table_id != table_id) {
