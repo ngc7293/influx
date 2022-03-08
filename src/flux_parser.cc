@@ -59,6 +59,7 @@ std::vector<FluxTable> FluxParser::parse(const std::string& body)
 
     std::vector<Column> columns;
     FluxTable table;
+    int current_table_id = -1;
     bool new_table = false;
 
     for (std::string line; std::getline(ssbody, line);) {
@@ -117,7 +118,16 @@ std::vector<FluxTable> FluxParser::parse(const std::string& body)
                 if (columns[i - 1].name == "result") {
                     record.name = token;
                 } else if (columns[i - 1].name == "table") {
-                    continue;
+                    auto table_id = std::stod(token);
+
+                    // New table but column definition has stayed the same
+                    if (current_table_id != table_id) {
+                        if (!table.empty()) {
+                            tables.push_back(std::move(table));
+                        }
+                        table.clear();
+                        current_table_id = table_id;
+                    }
                 } else if (columns[i - 1].name == "_start") {
                     record.start = parseRFC3339(token);
                 } else if (columns[i - 1].name == "_stop") {
@@ -140,7 +150,7 @@ std::vector<FluxTable> FluxParser::parse(const std::string& body)
                 } else if (columns[i - 1].name == "_field") {
                     record.field = token;
                 } else if (columns[i - 1].name == "_measurement") {
-                    record.field = token;
+                    record.measurement = token;
                 } else {
                     record.tags[columns[i - 1].name] = token;
                 }

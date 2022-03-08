@@ -75,13 +75,85 @@ TEST_F(InfluxTest, should_list_all_buckets)
     EXPECT_EQ(buckets.size(), expected.size());
 }
 
-TEST_F(InfluxTest, should_get_single_bucket)
+TEST_F(InfluxTest, should_list_all_buckets_with_paging)
+{
+    std::vector<std::pair<std::string, bool>> expected = {
+        {"_monitoring", true},
+        {"_tasks", true},
+        {"test-bucket-a", false},
+        {"test-bucket-b", false}
+    };
+
+    auto bucket_a = db.CreateBucket("test-bucket-a", 1h);
+    auto bucket_b = db.CreateBucket("test-bucket-b", 1h);
+
+    {
+        auto buckets = db.ListBuckets(2);
+        EXPECT_EQ(buckets[0].name(), "_monitoring");
+        EXPECT_EQ(buckets[1].name(), "_tasks");
+        EXPECT_EQ(buckets.size(), 2);
+    }
+    {
+        auto buckets = db.ListBuckets(2, 2);
+        EXPECT_EQ(buckets[0].name(), "test-bucket-a");
+        EXPECT_EQ(buckets[1].name(), "test-bucket-b");
+        EXPECT_EQ(buckets.size(), 2);
+    }
+}
+
+TEST_F(InfluxTest, should_throw_if_invalid_limit_passed)
+{
+    try {
+        auto bucket = db.ListBuckets(0, 0);
+        EXPECT_TRUE(false);
+    } catch (influx::InfluxError& e) {
+        EXPECT_STREQ(e.what(), "Limit must be within range [1, 100]");
+    } catch (...) {
+        EXPECT_TRUE(false);
+    }
+
+    try {
+        auto bucket = db.ListBuckets(101, 0);
+        EXPECT_TRUE(false);
+    } catch (influx::InfluxError& e) {
+        EXPECT_STREQ(e.what(), "Limit must be within range [1, 100]");
+    } catch (...) {
+        EXPECT_TRUE(false);
+    }
+
+    try {
+        auto bucket = db.ListBuckets(std::numeric_limits<std::size_t>::max(), 0);
+        EXPECT_TRUE(false);
+    } catch (influx::InfluxError& e) {
+        EXPECT_STREQ(e.what(), "Limit must be within range [1, 100]");
+    } catch (...) {
+        EXPECT_TRUE(false);
+    }
+}
+
+TEST_F(InfluxTest, should_get_single_bucket_by_id)
+{
+    auto name = influx::test::nowstring();
+    auto id = db.CreateBucket(name, 1h).id();
+
+    auto bucket = db.GetBucketById(id);
+    EXPECT_EQ(bucket.id(), id);
+    EXPECT_EQ(bucket.name(), name);
+    EXPECT_FALSE(bucket.is_system_bucket());
+}
+
+TEST_F(InfluxTest, should_return_invalid_bucket_if_id_empty)
+{
+    EXPECT_FALSE(db.GetBucketById(""));
+}
+
+TEST_F(InfluxTest, should_get_single_bucket_by_name)
 {
     {
         auto name = influx::test::nowstring();
         auto id = db.CreateBucket(name, 1h).id();
 
-        auto bucket = db.GetBucket(id);
+        auto bucket = db.GetBucketByName(name);
         EXPECT_EQ(bucket.id(), id);
         EXPECT_EQ(bucket.name(), name);
         EXPECT_FALSE(bucket.is_system_bucket());
@@ -90,16 +162,17 @@ TEST_F(InfluxTest, should_get_single_bucket)
         auto name = influx::test::nowstring();
         auto id = db.CreateBucket(name, 1h).id();
 
-        auto bucket = db[id];
+        auto bucket = db[name];
         EXPECT_EQ(bucket.id(), id);
         EXPECT_EQ(bucket.name(), name);
         EXPECT_FALSE(bucket.is_system_bucket());
     }
 }
 
-TEST_F(InfluxTest, should_return_invalid_bucket_if_id_empty)
+
+TEST_F(InfluxTest, should_return_invalid_bucket_if_name_empty)
 {
-    EXPECT_FALSE(db.GetBucket(""));
+    EXPECT_FALSE(db.GetBucketByName(""));
 }
 
 TEST_F(InfluxTest, should_return_parsed_query)

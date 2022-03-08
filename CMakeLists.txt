@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17)
-project(influx-cpp VERSION 0.0.1)
+project(influx-cpp VERSION 1.0.0)
 
 if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
     include("${CMAKE_BINARY_DIR}/conan_paths.cmake")

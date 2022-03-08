@@ -72,7 +72,7 @@ Bucket Influx::CreateBucket(const std::string& name, const std::chrono::seconds&
     );
 }
 
-Bucket Influx::GetBucket(const std::string& id)
+Bucket Influx::GetBucketById(const std::string& id)
 {
     if (id.empty()) {
         return Bucket();
@@ -89,9 +89,37 @@ Bucket Influx::GetBucket(const std::string& id)
     );
 }
 
-std::vector<Bucket> Influx::ListBuckets()
+Bucket Influx::GetBucketByName(const std::string& name)
 {
-    auto response = d_->client.Get("/api/v2/buckets");
+    if (name.empty()) {
+        return Bucket();
+    }
+
+    auto response = d_->client.Get("/api/v2/buckets?name=" + name);
+    auto data = nlohmann::json::parse(response.body);
+
+    if (data.count("buckets") && data["buckets"].is_array() && data["buckets"].size() >= 1) {
+        const auto& subdata = data["buckets"][0];
+        return Bucket(
+            subdata["id"],
+            subdata["name"],
+            subdata["orgID"],
+            transport::HttpClient(d_->client)
+        );
+    }
+
+    return Bucket();
+}
+
+std::vector<Bucket> Influx::ListBuckets(std::size_t limit, std::size_t offset)
+{
+    if (limit < 1 || limit > 100) {
+        throw InfluxError("Limit must be within range [1, 100]");
+    }
+
+    auto response = d_->client.Get(
+        "/api/v2/buckets?limit=" + std::to_string(limit) + "&offset=" + std::to_string(offset)
+    );
     auto data = nlohmann::json::parse(response.body);
 
     std::vector<Bucket> result;
@@ -146,9 +174,9 @@ std::vector<FluxTable> Influx::Query(const std::string& flux)
     return FluxParser().parse(response);
 }
 
-Bucket Influx::operator[](const std::string& id)
+Bucket Influx::operator[](const std::string& name)
 {
-    return GetBucket(id);
+    return GetBucketByName(name);
 }
 
 }

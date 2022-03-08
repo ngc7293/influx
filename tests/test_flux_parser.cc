@@ -26,29 +26,43 @@ TEST(FluxParserTest, should_parse_query_static)
 ,result,table,_start,_stop,_time,_value,_field,_measurement,domain
 ,acqui,0,2022-02-26T17:51:31.687426831Z,2022-02-26T17:51:51.687426831Z,2022-02-26T17:51:36.590333377Z,20,x,acquisition,1
 ,acqui,0,2022-02-26T17:51:31.687426831Z,2022-02-26T17:51:51.687426831Z,2022-02-26T17:51:41.590333377Z,10,x,acquisition,1
+,atmo,1,2022-02-26T17:51:31.687426831Z,2022-02-26T17:51:51.687426831Z,2022-02-26T17:51:41.590333377Z,10,temperature,atmosphere,2
 
 #datatype,string,long,dateTime:RFC3339,dateTime:RFC3339,dateTime:RFC3339,long,string,string,string,string
 ,result,table,_start,_stop,_time,_value,_field,_measurement,client,domain
 ,acqui,1,2022-02-26T17:51:31.687426831Z,2022-02-26T17:51:51.687426831Z,2022-02-26T17:51:46.590333377Z,30,x,fizzbuzz,2,1
 )~~");
 
-    ASSERT_EQ(tables.size(), 2);
+    ASSERT_EQ(tables.size(), 3);
     ASSERT_EQ(tables[0].size(), 2);
     ASSERT_EQ(tables[1].size(), 1);
+    ASSERT_EQ(tables[2].size(), 1);
 
+    EXPECT_EQ(tables[0][0].name, "acqui");
+    EXPECT_EQ(tables[0][0].field, "x");
+    EXPECT_EQ(tables[0][0].measurement, "acquisition");
     EXPECT_TRUE(std::holds_alternative<double>(tables[0][0].value));
     EXPECT_EQ(std::get<double>(tables[0][0].value), 20.0);
 
+    EXPECT_EQ(tables[0][0].name, "acqui");
+    EXPECT_EQ(tables[0][0].field, "x");
+    EXPECT_EQ(tables[0][0].measurement, "acquisition");
     EXPECT_TRUE(std::holds_alternative<double>(tables[0][1].value));
     EXPECT_EQ(std::get<double>(tables[0][1].value), 10.0);
 
-    EXPECT_TRUE(std::holds_alternative<std::int64_t>(tables[1][0].value));
-    EXPECT_EQ(std::get<std::int64_t>(tables[1][0].value), 30);
+    EXPECT_EQ(tables[1][0].name, "atmo");
+    EXPECT_EQ(tables[1][0].field, "temperature");
+    EXPECT_EQ(tables[1][0].measurement, "atmosphere");
+    EXPECT_TRUE(std::holds_alternative<double>(tables[1][0].value));
+    EXPECT_EQ(std::get<double>(tables[1][0].value), 10);
+
+    EXPECT_TRUE(std::holds_alternative<std::int64_t>(tables[2][0].value));
+    EXPECT_EQ(std::get<std::int64_t>(tables[2][0].value), 30);
 
     EXPECT_EQ(tables[0][0].start, 1645897891687426831ns);
     EXPECT_EQ(tables[0][0].stop,  1645897911687426831ns);
     EXPECT_EQ(tables[0][0].time,  1645897896590333377ns);
 
     EXPECT_EQ(tables[0][0].tags.at("domain"), "1");
-    EXPECT_EQ(tables[1][0].tags.at("client"), "2");
+    EXPECT_EQ(tables[2][0].tags.at("client"), "2");
 }
