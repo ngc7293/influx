@@ -26,7 +26,7 @@ TEST_F(BucketTest, should_accept_measurements)
     EXPECT_EQ(bucket.BufferedMeasurementsCount(), 1);
 }
 
-TEST_F(BucketTest, should_allow_flusing_measurements)
+TEST_F(BucketTest, should_allow_flushing_measurements)
 {
     bucket << (influx::Measurement("m") << influx::Field{"field1", 42});
     bucket.Flush();

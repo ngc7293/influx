@@ -33,6 +33,9 @@ public:
 
     Bucket operator[](const std::string& name);
 
+    bool Ready();
+    std::string OrgIdFromName(const std::string& name);
+
 private:
     struct Priv;
     std::unique_ptr<Priv> d_;

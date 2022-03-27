@@ -15,7 +15,7 @@ enum class Verb {
     GET,
     POST,
     PUT,
-    ELETE
+    DELETE
 };
 
 struct HttpResponse {

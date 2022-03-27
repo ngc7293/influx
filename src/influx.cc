@@ -179,4 +179,22 @@ Bucket Influx::operator[](const std::string& name)
     return GetBucketByName(name);
 }
 
+bool Influx::Ready()
+{
+    try {
+        auto response = d_->client.Get("/ready");
+        auto data = nlohmann::json::parse(response.body);
+        return (data["status"] == "ready");
+    } catch (...) {
+        return false;
+    }
+}
+
+std::string Influx::OrgIdFromName(const std::string& name)
+{
+    auto response = d_->client.Get("/api/v2/orgs/?org=" + name);
+    auto data = nlohmann::json::parse(response.body);
+    return data["orgs"][0]["id"].get<std::string>();
+}
+
 }

@@ -51,10 +51,12 @@ struct HttpClient::Priv {
     {
         std::string out;
 
-        if (endpoint.find("?") == std::string::npos) {
-            out = "?orgID=";
-        } else {
-            out = "&orgID=";
+        if (endpoint.find("orgID=") == std::string::npos && endpoint.find("org=") == std::string::npos) {
+            if (endpoint.find("?") == std::string::npos) {
+                out = "?orgID=";
+            } else {
+                out = "&orgID=";
+            }
         }
 
         return host + endpoint + out + org;
@@ -110,7 +112,7 @@ HttpResponse HttpClient::Delete(
     const std::vector<std::pair<std::string, std::string>> headers
 )
 {
-    return Perform(Verb::ELETE, endpoint, body, headers);
+    return Perform(Verb::DELETE, endpoint, body, headers);
 }
 
 HttpResponse HttpClient::Perform(
@@ -133,7 +135,7 @@ HttpResponse HttpClient::Perform(
             curl_easy_setopt(d_->handle, CURLOPT_POST, 1);
             curl_easy_setopt(d_->handle, CURLOPT_POSTFIELDSIZE, source.body.length());
             break;
-        case Verb::ELETE:
+        case Verb::DELETE:
             curl_easy_setopt(d_->handle, CURLOPT_CUSTOMREQUEST, "DELETE");
             curl_easy_setopt(d_->handle, CURLOPT_POSTFIELDSIZE, source.body.length());
             break;

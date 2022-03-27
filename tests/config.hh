@@ -11,32 +11,33 @@ using namespace std::chrono_literals;
 
 namespace influx::test {
 
+extern nlohmann::json docker_config;
+
 inline const nlohmann::json config()
 {
-    std::ifstream ifs;
-    nlohmann::json c;
-    
-    if (!std::filesystem::exists("test.config.json")) {
-        std::cerr << "Could not find 'test.config.json' in " << std::filesystem::current_path() << std::endl;
-        exit(-1);
+    if (std::filesystem::exists("test.config.json")) {
+        nlohmann::json c;
+        std::ifstream ifs;
+        ifs.open("test.config.json");
+        ifs >> c;
+
+        if (!c.count("host") && !c["host"].is_string()) {
+            std::cerr << "Invalid test config: missing 'host' field" << std::endl;
+        }
+
+        if (!c.count("org") && !c["org"].is_string()) {
+            std::cerr << "Invalid test config: missing 'org' field" << std::endl;
+        }
+
+        if (!c.count("token") && !c["token"].is_string()) {
+            std::cerr << "Invalid test config: missing 'token' field" << std::endl;
+        }
+        return c;
+    } else {
+        return docker_config;
     }
 
-    ifs.open("test.config.json");
-    ifs >> c;
 
-    if (!c.count("host") && !c["host"].is_string()) {
-        std::cerr << "Invalid test config: missing 'host' field" << std::endl;
-    }
-
-    if (!c.count("org") && !c["org"].is_string()) {
-        std::cerr << "Invalid test config: missing 'org' field" << std::endl;
-    }
-
-    if (!c.count("token") && !c["token"].is_string()) {
-        std::cerr << "Invalid test config: missing 'token' field" << std::endl;
-    }
-
-    return c;
 }
 
 inline influx::Influx db()

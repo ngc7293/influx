@@ -7,4 +7,10 @@ add_executable(influx.test
     test_measurement.cc
 )
 
-target_link_libraries(influx.test PRIVATE CONAN_PKG::gtest CONAN_PKG::nlohmann_json influx)
+target_link_libraries(influx.test
+    PRIVATE
+        CONAN_PKG::gtest
+        CONAN_PKG::libcurl
+        CONAN_PKG::nlohmann_json
+        influx
+)

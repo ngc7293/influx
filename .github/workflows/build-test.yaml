@@ -42,17 +42,6 @@ jobs:
       - name: Create directories
         run: mkdir build
 
-      - name: Install InfluxDB (Ubuntu)
-        if: matrix.config.os == 'ubuntu-20.04'
-        uses: ngc7293/influxdb-action@5413da1dc6e2c7c06ff22fd5c016bafaed1445dc
-        with:
-          influxdb_version: latest
-          influxdb_org: influx-cpp-test
-          influxdb_user: influx-cpp-test
-          influxdb_password: DummyPassword0
-          influxdb_bucket: dummy
-          influxdb_token: dummy
-
       - name: Install Third Parties (Ubuntu)
         if: matrix.config.os == 'ubuntu-20.04'
         working-directory: build
@@ -76,20 +65,11 @@ jobs:
       - name: Build
         working-directory: build
         run: cmake --build . --config ${{ matrix.config.build_type }} --parallel 2
-
-      - name: Test without API
-        if: matrix.config.os == 'windows-2022'
+      
+      - name: Pull Influx image
         working-directory: build
-        run: bin/influx.test --gtest_filter='-InfluxTest*:BucketTest*'  # These tests require a functional Influx
-
-      - name: Setup tests with API
-        if: matrix.config.os == 'ubuntu-20.04'
-        working-directory: build
-        run: |
-          export INFLUX_ORG_ID=$(influx bucket delete -n dummy -o influx-cpp-test -t dummy --json | jq -r .orgID)
-          echo "{\"host\": \"http://localhost:8086\", \"org\": \"${INFLUX_ORG_ID}\", \"token\": \"dummy\"}" > test.config.json
+        run: docker pull influxdb:latest
 
       - name: Test with API
-        if: matrix.config.os == 'ubuntu-20.04'
         working-directory: build
-        run: bin/influx.test
+        run: bin/influx.test --use-container
