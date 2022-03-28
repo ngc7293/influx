@@ -5,7 +5,9 @@
 #include <string>
 #include <vector>
 
+#define NOMINMAX
 #include <curl/curl.h>
+#undef NOMINMAX
 
 #include <nlohmann/json.hpp>
 
@@ -86,7 +88,7 @@ public:
 
     Response Delete(const std::string& endpoint, const nlohmann::json& body = {})
     {
-        auto [code, content] = CurlRequest(Verb::DELETE, endpoint, body.dump());
+        auto [code, content] = CurlRequest(Verb::DEL, endpoint, body.dump());
         return {code, content.empty() ? nlohmann::json::object() : nlohmann::json::parse(content)};
     }
 
@@ -96,7 +98,7 @@ public:
     }
 
 private:
-    enum class Verb { GET, POST, DELETE };
+    enum class Verb { GET, POST, DEL };
 
     std::pair<int, std::string> CurlRequest(Verb verb, const std::string& endpoint, const std::string& body = "")
     {
@@ -115,7 +117,7 @@ private:
             curl_easy_setopt(curl_, CURLOPT_POST, 1);
             curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE, source.body.length());
             verbStr = "POST";
-        } else if (verb == Verb::DELETE) {
+        } else if (verb == Verb::DEL) {
             curl_easy_setopt(curl_, CURLOPT_CUSTOMREQUEST, "DELETE");
             curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE, source.body.length());
             verbStr = "DELETE";

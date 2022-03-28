@@ -15,7 +15,7 @@ enum class Verb {
     GET,
     POST,
     PUT,
-    DELETE
+    REMOVE // HACK: MSVC won't allow DELETE as a enum value, causes errors
 };
 
 struct HttpResponse {
