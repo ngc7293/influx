@@ -65,7 +65,13 @@ jobs:
       - name: Build
         working-directory: build
         run: cmake --build . --config ${{ matrix.config.build_type }} --parallel 2
-      
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: build
+          path: build/bin/*
+
       - name: Pull Influx image
         working-directory: build
         run: docker pull influxdb:latest

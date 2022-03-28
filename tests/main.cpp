@@ -23,7 +23,6 @@ int main(int argc, const char* argv[])
         }
     }
 
-
     if (use_container) {
         docker::Docker dock;
         auto id = dock.Launch(
