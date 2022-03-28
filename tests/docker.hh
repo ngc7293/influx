@@ -2,7 +2,6 @@
 #define DOCKER_HH_
 
 #include <optional>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -101,8 +100,8 @@ private:
 
     std::pair<int, std::string> CurlRequest(Verb verb, const std::string& endpoint, const std::string& body = "")
     {
-        std::stringstream in, out;
-        out.str(body);
+        CurlReadCallbackData source{body};
+        CurlWriteCallbackData target;
 
         const char* verbStr = "GET";
         struct curl_slist *headers = curl_slist_append(nullptr, "Content-Type: application/json");
@@ -114,18 +113,18 @@ private:
 
         if (verb == Verb::POST) {
             curl_easy_setopt(curl_, CURLOPT_POST, 1);
-            curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE, body.length());
+            curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE, source.body.length());
             verbStr = "POST";
         } else if (verb == Verb::DELETE) {
             curl_easy_setopt(curl_, CURLOPT_CUSTOMREQUEST, "DELETE");
-            curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE, body.length());
+            curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE, source.body.length());
             verbStr = "DELETE";
         }
 
         curl_easy_setopt(curl_, CURLOPT_READFUNCTION, CurlReadCallback);
-        curl_easy_setopt(curl_, CURLOPT_READDATA, (void*)&out);
+        curl_easy_setopt(curl_, CURLOPT_READDATA, (void*)&source);
         curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, CurlWriteCallback);
-        curl_easy_setopt(curl_, CURLOPT_WRITEDATA, (void*)&in);
+        curl_easy_setopt(curl_, CURLOPT_WRITEDATA, (void*)&target);
 
         int code = -1;
         std::string response;
@@ -134,7 +133,7 @@ private:
 
         if (ret == CURLE_OK) {
             curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &code);
-            response = in.str();
+            response = target.body;
             response.erase(response.find_last_not_of("\r\n") + 1);
         } else {
             response = "{\"curl_error\": " + std::to_string(ret) + "}";
@@ -147,18 +146,35 @@ private:
         return {code, std::move(response)};
     }
 
+    struct CurlReadCallbackData {
+        const std::string& body;
+        std::size_t cursor = 0;
+    };
+
+    struct CurlWriteCallbackData {
+        std::string body;
+    };
+
     static std::size_t CurlReadCallback(char *buffer, std::size_t size, std::size_t nitems, void *userdata)
     {
-        std::stringstream& ss = *(static_cast<std::stringstream*>(userdata));
-        ss.get(buffer, size * nitems);
-        return ss.gcount();
+        CurlReadCallbackData& data = *(static_cast<CurlReadCallbackData*>(userdata));
+        std::size_t readSize = std::min(data.body.length() - data.cursor, size * nitems);
+
+        if (readSize == 0) {
+            return 0;
+        }
+
+        memcpy(static_cast<void*>(buffer), data.body.c_str() + data.cursor, readSize);
+        data.cursor += readSize;
+        return readSize;
     }
 
     static std::size_t CurlWriteCallback(const char *ptr, std::size_t size, std::size_t nmemb, void *userdata)
     {
-        std::stringstream& ss = *(static_cast<std::stringstream*>(userdata));
-        ss.write(ptr, size * nmemb);
-        return size * nmemb;
+        CurlWriteCallbackData& data = *(static_cast<CurlWriteCallbackData*>(userdata));
+        std::string str(ptr, size * nmemb);
+        data.body += str;
+        return str.length();
     }
 
 private:
