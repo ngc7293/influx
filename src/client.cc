@@ -8,6 +8,10 @@
 #define NOMINMAX
 #include <curl/curl.h>
 
+#ifdef DELETE
+#undef DELETE // Damn you Windows
+#endif
+
 namespace influx::transport {
 
 namespace {
@@ -110,7 +114,7 @@ HttpResponse HttpClient::Delete(
     const std::vector<std::pair<std::string, std::string>> headers
 )
 {
-    return Perform(Verb::ELETE, endpoint, body, headers);
+    return Perform(Verb::DELETE, endpoint, body, headers);
 }
 
 HttpResponse HttpClient::Perform(
@@ -133,7 +137,7 @@ HttpResponse HttpClient::Perform(
             curl_easy_setopt(d_->handle, CURLOPT_POST, 1);
             curl_easy_setopt(d_->handle, CURLOPT_POSTFIELDSIZE, source.body.length());
             break;
-        case Verb::ELETE:
+        case Verb::DELETE:
             curl_easy_setopt(d_->handle, CURLOPT_CUSTOMREQUEST, "DELETE");
             curl_easy_setopt(d_->handle, CURLOPT_POSTFIELDSIZE, source.body.length());
             break;
