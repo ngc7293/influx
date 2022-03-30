@@ -19,6 +19,7 @@ add_library(influx STATIC
     src/flux_parser.cc
     src/influx.cc
     src/measurement.cc
+    src/util.hh
 )
 
 target_include_directories(influx PUBLIC include)

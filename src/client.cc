@@ -3,14 +3,16 @@
 #include <cassert>
 #include <cstring>
 
-#include <influx/client.hh>
-
 #define NOMINMAX
 #include <curl/curl.h>
 
 #ifdef DELETE
 #undef DELETE // Damn you Windows
 #endif
+
+#include <influx/client.hh>
+
+#include "util.hh"
 
 namespace influx::transport {
 
@@ -63,6 +65,18 @@ struct HttpClient::Priv {
 
         return host + endpoint + out + org;
     }
+
+    struct curl_slist* makeHeaders(const std::unordered_map<std::string, std::string>& headers)
+    {
+        struct curl_slist* curlHeaders = curl_slist_append(nullptr, ("Authorization: Bearer " + token).c_str());
+
+        std::for_each(headers.begin(), headers.end(), [&](const auto& kvp) {
+            std::string formatted = kvp.first + ": " + kvp.second;
+            curlHeaders = curl_slist_append(curlHeaders, formatted.c_str());
+        });
+
+        return curlHeaders;
+    }
 };
 
 HttpClient::HttpClient()
@@ -93,7 +107,7 @@ HttpClient::~HttpClient()
 
 HttpResponse HttpClient::Get(
     const std::string& endpoint,
-    const std::vector<std::pair<std::string, std::string>> headers
+    const std::unordered_map<std::string, std::string>& headers
 )
 {
     return Perform(Verb::GET, endpoint, std::string(), headers);
@@ -102,7 +116,7 @@ HttpResponse HttpClient::Get(
 HttpResponse HttpClient::Post(
     const std::string& endpoint,
     const std::string& body,
-    const std::vector<std::pair<std::string, std::string>> headers
+    const std::unordered_map<std::string, std::string>& headers
 )
 {
     return Perform(Verb::POST, endpoint, body, headers);
@@ -111,7 +125,7 @@ HttpResponse HttpClient::Post(
 HttpResponse HttpClient::Delete(
     const std::string& endpoint,
     const std::string& body,
-    const std::vector<std::pair<std::string, std::string>> headers
+    const std::unordered_map<std::string, std::string>& headers
 )
 {
     return Perform(Verb::DELETE, endpoint, body, headers);
@@ -121,7 +135,7 @@ HttpResponse HttpClient::Perform(
     Verb verb,
     const std::string& endpoint,
     const std::string& body,
-    const std::vector<std::pair<std::string, std::string>> headers
+    const std::unordered_map<std::string, std::string>& headers
 )
 {
     ReadCallbackData source{body};
@@ -146,13 +160,8 @@ HttpResponse HttpClient::Perform(
             break;
     }
 
-    struct curl_slist* curlHeaders = nullptr;
-    for (const auto& header: headers) {
-        std::string formatted = header.first + ": " + header.second;
-        curlHeaders = curl_slist_append(curlHeaders, formatted.c_str());
-    }
-
-    curlHeaders = curl_slist_append(curlHeaders, ("Authorization: Bearer " + d_->token).c_str());
+    struct curl_slist* curlHeaders = d_->makeHeaders(headers);
+    auto _ = finally([&]() { curl_slist_free_all(curlHeaders); });
 
     curl_easy_setopt(d_->handle, CURLOPT_HTTPHEADER, curlHeaders);
     curl_easy_setopt(d_->handle, CURLOPT_READFUNCTION, ReadCallback);
@@ -161,7 +170,6 @@ HttpResponse HttpClient::Perform(
     curl_easy_setopt(d_->handle, CURLOPT_WRITEDATA, (void*)&target);
     
     if (curl_easy_perform(d_->handle) != CURLE_OK) {
-        curl_slist_free_all(curlHeaders);
         throw InfluxError();
     }
 
@@ -169,16 +177,10 @@ HttpResponse HttpClient::Perform(
     curl_easy_getinfo(d_->handle, CURLINFO_RESPONSE_CODE, &status);
 
     if (status / 100 > 2) {
-        curl_slist_free_all(curlHeaders);
         throw InfluxRemoteError(status, std::move(target.body));
+    } else {
+        return {status, std::move(target.body)};
     }
-
-    HttpResponse response;
-    curl_easy_getinfo(d_->handle, CURLINFO_RESPONSE_CODE, &response.status);
-    response.body = std::move(target.body);
-
-    curl_slist_free_all(curlHeaders);
-    return response;
 }
 
 } // namespace

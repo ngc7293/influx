@@ -167,4 +167,4 @@ std::vector<FluxTable> FluxParser::parse(const std::string& body)
     return tables;
 }
 
-}
+} // namespace

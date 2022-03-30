@@ -1,11 +1,11 @@
-#ifndef INFLUX_CLIENT_HH_
-#define INFLUX_CLIENT_HH_
+#ifndef INFLUX__CLIENT_HH_
+#define INFLUX__CLIENT_HH_
 
 #include <memory>
 #include <string>
 #include <thread>
 #include <utility>
-#include <vector>
+#include <unordered_map>
 
 #include <influx/types.hh>
 
@@ -33,19 +33,19 @@ public:
 
     HttpResponse Get(
         const std::string& endpoint,
-        const std::vector<std::pair<std::string, std::string>> headers = {}
+        const std::unordered_map<std::string, std::string>& headers = {}
     );
 
     HttpResponse Post(
         const std::string& endpoint,
         const std::string& body,
-        const std::vector<std::pair<std::string, std::string>> headers = {}
+        const std::unordered_map<std::string, std::string>& headers = {}
     );
 
     HttpResponse Delete(
         const std::string& endpoint,
         const std::string& body = "",
-        const std::vector<std::pair<std::string, std::string>> headers = {}
+        const std::unordered_map<std::string, std::string>& headers = {}
     );
 
 
@@ -54,7 +54,7 @@ private:
         const Verb verb,
         const std::string& endpoint,
         const std::string& body,
-        const std::vector<std::pair<std::string, std::string>> headers
+        const std::unordered_map<std::string, std::string>& headers
     );
 
 private:

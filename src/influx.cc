@@ -179,4 +179,4 @@ Bucket Influx::operator[](const std::string& name)
     return GetBucketByName(name);
 }
 
-}
+} // namespace

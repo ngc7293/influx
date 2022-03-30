@@ -1,5 +1,5 @@
-#ifndef INFLUX_TYPES_HH_
-#define INFLUX_TYPES_HH_
+#ifndef INFLUX__TYPES_HH_
+#define INFLUX__TYPES_HH_
 
 #include <chrono>
 #include <exception>
@@ -41,6 +41,6 @@ namespace influx {
         int statusCode_;
         std::string message_;
     };
-}
+} // namespace
 
 #endif

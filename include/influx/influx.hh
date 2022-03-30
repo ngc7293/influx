@@ -1,5 +1,5 @@
-#ifndef INFLUX_INFLUX_HH_
-#define INFLUX_INFLUX_HH_
+#ifndef INFLUX__INFLUX_HH_
+#define INFLUX__INFLUX_HH_
 
 #include <chrono>
 #include <memory>
@@ -38,6 +38,6 @@ private:
     std::unique_ptr<Priv> d_;
 };
 
-}
+} // namespace
 
 #endif

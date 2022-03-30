@@ -1,5 +1,5 @@
-#ifndef INFLUX_FLUXPARSER_HH_
-#define INFLUX_FLUXPARSER_HH_
+#ifndef INFLUX__FLUX_PARSER_HH_
+#define INFLUX__FLUX_PARSER_HH_
 
 #include <memory>
 #include <string>
@@ -28,6 +28,6 @@ public:
     std::vector<FluxTable> parse(const std::string& body);
 };
 
-}
+} // namespace
 
 #endif

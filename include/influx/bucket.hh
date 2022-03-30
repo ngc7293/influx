@@ -1,5 +1,5 @@
-#ifndef INFLUX_BUCKET_HH_
-#define INFLUX_BUCKET_HH_
+#ifndef INFLUX__BUCKET_HH_
+#define INFLUX__BUCKET_HH_
 
 #include <functional>
 #include <memory>
@@ -48,7 +48,7 @@ class NullBucketError : public InfluxError {
     const char* what() const throw() override { return "Cannot act on null bucket"; }
 };
 
-}
+} // namespace
 
 influx::Bucket& operator<<(influx::Bucket& bucket, const influx::Measurement& measurement);
 

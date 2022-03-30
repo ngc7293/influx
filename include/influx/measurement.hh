@@ -1,5 +1,5 @@
-#ifndef INFLUX_MEASUREMENT_HH_
-#define INFLUX_MEASUREMENT_HH_
+#ifndef INFLUX__MEASUREMENT_HH_
+#define INFLUX__MEASUREMENT_HH_
 
 #include <iostream>
 #include <set>

@@ -1,5 +1,5 @@
-#ifndef INFLUX_TEST_TESTCONFIG_HH_
-#define INFLUX_TEST_TESTCONFIG_HH_
+#ifndef INFLUX__TEST__TESTCONFIG_HH_
+#define INFLUX__TEST__TESTCONFIG_HH_
 
 #include <fstream>
 #include <filesystem>
@@ -50,6 +50,6 @@ inline std::string nowstring()
     return std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
 }
 
-}
+} // namespace
 
 #endif
