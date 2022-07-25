@@ -205,3 +205,18 @@ TEST_F(InfluxTest, should_return_parsed_query)
     EXPECT_TRUE(std::holds_alternative<std::int64_t>(tables[1][0].value));
     EXPECT_EQ(std::get<std::int64_t>(tables[1][0].value), 30);
 }
+
+TEST(InitInfluxTest, should_throw_if_invalid_token_passed)
+{
+    const auto c = influx::test::config();
+    influx::Influx db(c["host"], c["org"], "invalid");
+
+    try {
+        db.CreateBucket(influx::test::nowstring(), 1h);
+    } catch (influx::InfluxRemoteError& e) {
+        EXPECT_EQ(e.statusCode(), 401);
+    } catch (...) {
+        EXPECT_TRUE(false);
+    }
+
+}
