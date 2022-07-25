@@ -83,7 +83,7 @@ jobs:
       - name: Test without API
         if: matrix.config.os == 'windows-2022'
         working-directory: build
-        run: bin/influx.test --gtest_filter='-InfluxTest*:BucketTest*'  # These tests require a functional Influx
+        run: bin/influx.test --gtest_filter='-InfluxTest*:BucketTest*:InitInfluxTest*'  # These tests require a functional Influx
 
       - name: Setup tests with API
         if: matrix.config.os == 'ubuntu-20.04'
