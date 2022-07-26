@@ -76,17 +76,39 @@ jobs:
           path: build/bin/*
           retention-days: 5
 
-      - name: Pull Influx image
+      - name: Test without API
+        if: matrix.config.os == 'windows-2022'
         working-directory: build
-        run: docker pull influxdb:latest
+        run: bin/influx.test --gtest_filter='-InfluxTest*:BucketTest*:InitInfluxTest*'  # These tests require a functional Influx
 
-      - name: Setup InfluxDB
+      - name: Pull Influx image
+        if: matrix.config.os == 'ubuntu-20.04'
         working-directory: build
         run: |
-          influx setup --host http://localhost:8086 -f -o test -u test -p DummyPassword0 -b test -t dummy
+          docker pull influxdb:latest
+          docker create -p 8086:8086 --name influx influxdb:latest
+          docker start influx
+          until curl -s http://localhost:8086/health; do sleep 1; done
+
+      - name: Install Influx client
+        if: matrix.config.os == 'ubuntu-20.04'
+        run: |
+          export INFLUXDB_VERSION=$(curl --silent "https://api.github.com/repos/influxdata/influxdb/releases" | jq -r '. | sort_by(.tag_name) | reverse[] | .tag_name' | sed -e 's/v//g' | head -n 1)
+          export INFLUXDB_DOWNLOAD_PATH="https://dl.influxdata.com/influxdb/releases"
+          wget -q $INFLUXDB_DOWNLOAD_PATH/influxdb2-client-$INFLUXDB_VERSION-linux-amd64.tar.gz
+          tar xvfz influxdb2-client-$INFLUXDB_VERSION-linux-amd64.tar.gz
+          sudo cp influxdb2-client-$INFLUXDB_VERSION-linux-amd64/influx /usr/local/bin/
+          rm -r influxdb2-client-$INFLUXDB_VERSION-linux-amd64/
+
+      - name: Setup InfluxDB
+        if: matrix.config.os == 'ubuntu-20.04'
+        working-directory: build
+        run: |
+          influx setup --host http://localhost:8086 -f -o test -u test -p DummyPassword0 -b dummy -t dummy
           export INFLUX_ORG_ID=$(influx bucket delete -n dummy -o test -t dummy --json | jq -r .orgID)
           echo "{\"host\": \"http://localhost:8086\", \"org\": \"${INFLUX_ORG_ID}\", \"token\": \"dummy\"}" > test.config.json
 
       - name: Test with API
+        if: matrix.config.os == 'ubuntu-20.04'
         working-directory: build
-        run: bin/influx.test --use-container
+        run: bin/influx.test
