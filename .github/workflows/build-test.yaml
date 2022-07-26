@@ -80,6 +80,13 @@ jobs:
         working-directory: build
         run: docker pull influxdb:latest
 
+      - name: Setup InfluxDB
+        working-directory: build
+        run: |
+          influx setup --host http://localhost:8086 -f -o test -u test -p DummyPassword0 -b test -t dummy
+          export INFLUX_ORG_ID=$(influx bucket delete -n dummy -o test -t dummy --json | jq -r .orgID)
+          echo "{\"host\": \"http://localhost:8086\", \"org\": \"${INFLUX_ORG_ID}\", \"token\": \"dummy\"}" > test.config.json
+
       - name: Test with API
         working-directory: build
         run: bin/influx.test --use-container
