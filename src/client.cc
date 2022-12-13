@@ -51,8 +51,7 @@ namespace {
 
 struct HttpClient::Priv {
     const std::string host, org, token;
-    CURL* handle = curl_easy_init();
-
+   
     std::string makeUrl(const std::string& endpoint)
     {
         std::string out;
@@ -102,7 +101,6 @@ HttpClient::HttpClient(const std::string& host, const std::string& org, const st
 
 HttpClient::~HttpClient()
 {
-    curl_easy_cleanup(d_->handle);
 }
 
 HttpResponse HttpClient::Get(
@@ -141,19 +139,20 @@ HttpResponse HttpClient::Perform(
     ReadCallbackData source{body};
     WriteCallbackData target;
 
-    curl_easy_reset(d_->handle);
-    curl_easy_setopt(d_->handle, CURLOPT_URL, d_->makeUrl(endpoint).c_str());
+    CURL* handle = curl_easy_init();
+    curl_easy_reset(handle);
+    curl_easy_setopt(handle, CURLOPT_URL, d_->makeUrl(endpoint).c_str());
 
     switch (verb) {
         case Verb::GET:
             break;
         case Verb::POST:
-            curl_easy_setopt(d_->handle, CURLOPT_POST, 1);
-            curl_easy_setopt(d_->handle, CURLOPT_POSTFIELDSIZE, source.body.length());
+            curl_easy_setopt(handle, CURLOPT_POST, 1);
+            curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, source.body.length());
             break;
         case Verb::DELETE:
-            curl_easy_setopt(d_->handle, CURLOPT_CUSTOMREQUEST, "DELETE");
-            curl_easy_setopt(d_->handle, CURLOPT_POSTFIELDSIZE, source.body.length());
+            curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "DELETE");
+            curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, source.body.length());
             break;
         default:
             assert(false);
@@ -163,22 +162,25 @@ HttpResponse HttpClient::Perform(
     struct curl_slist* curlHeaders = d_->makeHeaders(headers);
     auto _ = finally([&]() { curl_slist_free_all(curlHeaders); });
 
-    curl_easy_setopt(d_->handle, CURLOPT_HTTPHEADER, curlHeaders);
-    curl_easy_setopt(d_->handle, CURLOPT_READFUNCTION, ReadCallback);
-    curl_easy_setopt(d_->handle, CURLOPT_READDATA, (void*)&source);
-    curl_easy_setopt(d_->handle, CURLOPT_WRITEFUNCTION, WriteCallback);
-    curl_easy_setopt(d_->handle, CURLOPT_WRITEDATA, (void*)&target);
+    curl_easy_setopt(handle, CURLOPT_HTTPHEADER, curlHeaders);
+    curl_easy_setopt(handle, CURLOPT_READFUNCTION, ReadCallback);
+    curl_easy_setopt(handle, CURLOPT_READDATA, (void*)&source);
+    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, WriteCallback);
+    curl_easy_setopt(handle, CURLOPT_WRITEDATA, (void*)&target);
     
-    if (curl_easy_perform(d_->handle) != CURLE_OK) {
+    if (curl_easy_perform(handle) != CURLE_OK) {
+        curl_easy_cleanup(handle);
         throw InfluxError();
     }
 
     int status;
-    curl_easy_getinfo(d_->handle, CURLINFO_RESPONSE_CODE, &status);
+    curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &status);
 
     if (status / 100 > 2) {
+        curl_easy_cleanup(handle);
         throw InfluxRemoteError(status, std::move(target.body));
     } else {
+        curl_easy_cleanup(handle);
         return {status, std::move(target.body)};
     }
 }

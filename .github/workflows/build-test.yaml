@@ -93,7 +93,7 @@ jobs:
       - name: Install Influx client
         if: matrix.config.os == 'ubuntu-20.04'
         run: |
-          export INFLUXDB_VERSION=$(curl --silent "https://api.github.com/repos/influxdata/influxdb/releases" | jq -r '. | sort_by(.tag_name) | reverse[] | .tag_name' | sed -e 's/v//g' | head -n 1)
+          export INFLUXDB_VERSION=$(curl --silent "https://api.github.com/repos/influxdata/influx-cli/releases" | jq -r '. | sort_by(.tag_name) | reverse[] | .tag_name' | sed -e 's/v//g' | head -n 1)
           export INFLUXDB_DOWNLOAD_PATH="https://dl.influxdata.com/influxdb/releases"
           wget -q $INFLUXDB_DOWNLOAD_PATH/influxdb2-client-$INFLUXDB_VERSION-linux-amd64.tar.gz
           tar xvfz influxdb2-client-$INFLUXDB_VERSION-linux-amd64.tar.gz

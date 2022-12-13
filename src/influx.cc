@@ -46,7 +46,7 @@ Influx::~Influx()
 {
 }
 
-Bucket Influx::CreateBucket(const std::string& name, const std::chrono::seconds& dataRetention)
+std::future<Bucket> Influx::CreateBucket(const std::string& name, const std::chrono::seconds& dataRetention)
 {
     if (dataRetention < 1h && dataRetention != 0s) {
         throw InfluxError("Retention policy must be at least an hour");
@@ -61,15 +61,17 @@ Bucket Influx::CreateBucket(const std::string& name, const std::chrono::seconds&
         }}}
     };
 
-    auto response = d_->client.Post("/api/v2/buckets", body.dump());
-    auto data = nlohmann::json::parse(response.body);
+    return std::async([this](std::string&& body) -> Bucket {
+        auto response = d_->client.Post("/api/v2/buckets", body);
+        auto data = nlohmann::json::parse(response.body);
 
-    return Bucket(
-        data["id"],
-        data["name"],
-        data["orgID"],
-        transport::HttpClient(d_->client)
-    );
+        return Bucket(
+            data["id"],
+            data["name"],
+            data["orgID"],
+            transport::HttpClient(d_->client)
+        );
+    }, body.dump());
 }
 
 Bucket Influx::GetBucketById(const std::string& id)

@@ -25,7 +25,7 @@ protected:
 
 TEST_F(InfluxTest, should_create_and_delete_buckets)
 {
-    auto bucket = db.CreateBucket("bucket" + influx::test::nowstring(), 2h);
+    auto bucket = db.CreateBucket("bucket" + influx::test::nowstring(), 2h).get();
     EXPECT_NE(bucket.id(), "");
 
     db.DeleteBucket(bucket);
@@ -34,14 +34,14 @@ TEST_F(InfluxTest, should_create_and_delete_buckets)
 
 TEST_F(InfluxTest, should_allow_infinite_retention_buckets)
 {
-    auto bucket = db.CreateBucket("bucket" + influx::test::nowstring(), 0s);
+    auto bucket = db.CreateBucket("bucket" + influx::test::nowstring(), 0s).get();
     EXPECT_NE(bucket.id(), "");
 }
 
 TEST_F(InfluxTest, should_prevent_creation_of_bucket_with_too_short_retention_policy)
 {
     try {
-        auto bucket = db.CreateBucket("bucket" + influx::test::nowstring(), 1s);
+        db.CreateBucket("bucket" + influx::test::nowstring(), 1s).wait();
         EXPECT_TRUE(false);
     } catch (influx::InfluxError& e) {
         EXPECT_STREQ(e.what(), "Retention policy must be at least an hour");
@@ -59,8 +59,8 @@ TEST_F(InfluxTest, should_list_all_buckets)
         {"test-bucket-b", false}
     };
 
-    auto bucket_a = db.CreateBucket("test-bucket-a", 1h);
-    auto bucket_b = db.CreateBucket("test-bucket-b", 1h);
+    db.CreateBucket("test-bucket-a", 1h).wait();
+    db.CreateBucket("test-bucket-b", 1h).wait();
 
     auto buckets = db.ListBuckets();
     for (const auto& expect: expected) {
@@ -84,8 +84,8 @@ TEST_F(InfluxTest, should_list_all_buckets_with_paging)
         {"test-bucket-b", false}
     };
 
-    auto bucket_a = db.CreateBucket("test-bucket-a", 1h);
-    auto bucket_b = db.CreateBucket("test-bucket-b", 1h);
+    db.CreateBucket("test-bucket-a", 1h).wait();
+    db.CreateBucket("test-bucket-b", 1h).wait();
 
     {
         auto buckets = db.ListBuckets(2);
@@ -134,7 +134,7 @@ TEST_F(InfluxTest, should_throw_if_invalid_limit_passed)
 TEST_F(InfluxTest, should_get_single_bucket_by_id)
 {
     auto name = influx::test::nowstring();
-    auto id = db.CreateBucket(name, 1h).id();
+    auto id = db.CreateBucket(name, 1h).get().id();
 
     auto bucket = db.GetBucketById(id);
     EXPECT_EQ(bucket.id(), id);
@@ -151,7 +151,7 @@ TEST_F(InfluxTest, should_get_single_bucket_by_name)
 {
     {
         auto name = influx::test::nowstring();
-        auto id = db.CreateBucket(name, 1h).id();
+        auto id = db.CreateBucket(name, 1h).get().id();
 
         auto bucket = db.GetBucketByName(name);
         EXPECT_EQ(bucket.id(), id);
@@ -160,7 +160,7 @@ TEST_F(InfluxTest, should_get_single_bucket_by_name)
     }
     {
         auto name = influx::test::nowstring();
-        auto id = db.CreateBucket(name, 1h).id();
+        auto id = db.CreateBucket(name, 1h).get().id();
 
         auto bucket = db[name];
         EXPECT_EQ(bucket.id(), id);
@@ -178,7 +178,7 @@ TEST_F(InfluxTest, should_return_invalid_bucket_if_name_empty)
 TEST_F(InfluxTest, should_return_parsed_query)
 {
     auto name = influx::test::nowstring();
-    auto bucket = db.CreateBucket(name, 1h);
+    auto bucket = db.CreateBucket(name, 1h).get();
     auto now = influx::Clock::now() - std::chrono::seconds(15);
 
     bucket
@@ -212,7 +212,7 @@ TEST(InitInfluxTest, should_throw_if_invalid_token_passed)
     influx::Influx db(c["host"], c["org"], "invalid");
 
     try {
-        db.CreateBucket(influx::test::nowstring(), 1h);
+        db.CreateBucket(influx::test::nowstring(), 1h).wait();
     } catch (influx::InfluxRemoteError& e) {
         EXPECT_EQ(e.statusCode(), 401);
     } catch (...) {

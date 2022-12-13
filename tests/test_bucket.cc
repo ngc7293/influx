@@ -7,7 +7,7 @@
 class BucketTest: public ::testing::Test {
 protected:
     influx::Influx db = influx::test::db();
-    influx::Bucket bucket = db.CreateBucket("bucket-" + influx::test::nowstring(), 1h);
+    influx::Bucket bucket = db.CreateBucket("bucket-" + influx::test::nowstring(), 1h).get();
 
     void TearDown() override
     {
@@ -45,7 +45,7 @@ TEST_F(BucketTest, should_be_reassignable)
     EXPECT_EQ(first.name(), "");
     EXPECT_EQ(second.name(), "");
 
-    first = db.CreateBucket("bucket-other", 1h);
+    first = db.CreateBucket("bucket-other", 1h).get();
     EXPECT_EQ(first.name(), "bucket-other");
     EXPECT_EQ(second.name(), "");
 
@@ -97,8 +97,8 @@ TEST_F(BucketTest, should_throw_if_flusing_null_bucket)
 
 TEST_F(BucketTest, should_be_comparable)
 {
-    auto first = db.CreateBucket("bucket-a", 1h);
-    auto second = db.CreateBucket("bucket-b", 1h);
+    auto first = db.CreateBucket("bucket-a", 1h).get();
+    auto second = db.CreateBucket("bucket-b", 1h).get();
     auto third = first;
 
     EXPECT_EQ(influx::Bucket(), influx::Bucket());

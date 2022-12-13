@@ -2,6 +2,7 @@
 #define INFLUX__INFLUX_HH_
 
 #include <chrono>
+#include <future>
 #include <memory>
 #include <string>
 #include <vector>
@@ -22,7 +23,7 @@ public:
 
     ~Influx();
 
-    Bucket CreateBucket(const std::string& name, const std::chrono::seconds& dataRetention);
+    std::future<Bucket> CreateBucket(const std::string& name, const std::chrono::seconds& dataRetention);
     Bucket GetBucketById(const std::string& id);
     Bucket GetBucketByName(const std::string& name);
     std::vector<Bucket> ListBuckets(std::size_t limit = 20, std::size_t offset = 0);
